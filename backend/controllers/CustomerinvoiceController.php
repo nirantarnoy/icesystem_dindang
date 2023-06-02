@@ -334,7 +334,7 @@ class CustomerinvoiceController extends Controller
            // $model = \common\models\QuerySalePaySummary::find()->where(['customer_id' => $cus_id])->andFilterWhere(['!=', 'payment_status', 1])->orderBy(['order_id' => SORT_DESC])->all();
             $sql = "select t1.id as order_id,t1.order_date,sum(t2.line_total) AS remain_amt";
             $sql .= " FROM orders as t1 INNER JOIN order_line as t2 ON t1.id = t2.order_id ";
-            $sql .= " WHERE  (t1.customer_id =" . $cus_id. " OR t2.customer_id=".$cus_id;
+            $sql .= " WHERE  (t1.customer_id =" . $cus_id. " OR t2.customer_id=".$cus_id.")";
             $sql .= " AND (t1.payment_status !=1 OR ISNULL(t1.payment_status))";
             $sql .= " AND t1.payment_method_id = 2";
             $sql .= " AND t1.status != 3";
