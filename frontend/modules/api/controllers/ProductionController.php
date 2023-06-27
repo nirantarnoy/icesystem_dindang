@@ -83,17 +83,17 @@ class ProductionController extends Controller
 
         if ($product_id && $warehouse_id && $qty) {
 
-            $main_warehouse = \backend\models\Warehouse::findPrimary($company_id, $branch_id);
-
+            //$main_warehouse = \backend\models\Warehouse::findPrimary($company_id, $branch_id);
+            $warehouse_id = 6; // หนองขาหยั่ง
             $model_journal = new \backend\models\Stockjournal();
             if ($production_type == 1) {
-                sleep(3);
+                sleep(1);
                 $model_journal->journal_no = $model_journal->getLastNo($company_id, $branch_id);
             } else if ($production_type == 5) {
-                sleep(3);
+                sleep(1);
                 $model_journal->journal_no = $model_journal->getLastNoReceiveTransfer($company_id, $branch_id);
             } else {
-                sleep(3);
+                sleep(1);
                 //       $model_journal->journal_no = $model_journal->getLastNoNew($company_id, $branch_id, $act_id, $production_type);
                 $model_journal->journal_no = $model_journal->getLastNoCarreprocess($company_id, $branch_id);
             }
@@ -112,7 +112,7 @@ class ProductionController extends Controller
                 $model->trans_date = date('Y-m-d H:i:s');
                 $model->product_id = $product_id;
                 $model->qty = $qty;
-                $model->warehouse_id = $main_warehouse;//$warehouse_id;
+                $model->warehouse_id = $warehouse_id;//$warehouse_id;
                 $model->stock_type = 1;
                 $model->activity_type_id = $act_id; // 15 prod rec
                 $model->production_type = $production_type;
@@ -121,7 +121,7 @@ class ProductionController extends Controller
                 $model->created_by = $user_id;
                 if ($model->save(false)) {
                     $status = 1;
-                    $this->updateSummary($product_id, $main_warehouse, $qty);
+                    $this->updateSummary($product_id, $warehouse_id, $qty);
                 }
             }
 //            $model = \backend\models\Stockjournal::find()->where(['id' => $model_journal->id])->one();

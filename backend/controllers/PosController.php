@@ -41,7 +41,7 @@ class PosController extends Controller
                     ],
                     [
                         'actions' => [
-                            'logout', 'index', 'indextest', 'print', 'printindex', 'dailysum', 'getcustomerprice', 'getoriginprice', 'closesale', 'cancelorder', 'manageclose',
+                            'logout', 'index', 'indextest', 'indextest2', 'print', 'printindex', 'dailysum', 'getcustomerprice', 'getoriginprice', 'closesale', 'cancelorder', 'manageclose',
                             'salehistory', 'getbasicprice', 'delete', 'orderedit', 'posupdate', 'posttrans', 'saledailyend', 'saledailyend2', 'printdo', 'createissue', 'updatestock', 'listissue', 'updateissue', 'printsummary', 'printcarsummary'
                             , 'finduserdate', 'editsaleclose', 'createscreenshort', 'print2', 'calcloseshift', 'closesaletest'
                         ],
@@ -54,6 +54,7 @@ class PosController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                    'indextest'=> ['POST','GET'],
                 ],
             ],
         ];
@@ -70,15 +71,21 @@ class PosController extends Controller
         ]);
     }
 
-    public function actionIndextest()
+    public function actionIndextest($id)
     {
 //        if (file_exists('../web/uploads/slip/slip_index.pdf')) {
 //            unlink('../web/uploads/slip/slip_index.pdf');
 //        }
         $this->layout = 'main_pos_new';
-        return $this->render('indextest', [
-            'model' => null
+        return $this->render('indextest_new', [
+            'model' => null,
+            'model_line'=> null,
+            'order_id'=>$id
         ]);
+    }
+    public function actionIndextest2($id)
+    {
+        echo $id;
     }
 
     public function actionGetcustomerprice()
@@ -162,7 +169,6 @@ class PosController extends Controller
 
     public function actionClosesale()
     {
-
         $company_id = 0;
         $branch_id = 0;
         $default_warehouse = 0; // 6
@@ -491,6 +497,7 @@ class PosController extends Controller
        // $url = 'http://192.168.60.180:1223/api/pos/posclose';
         //$url = 'http://103.253.73.108:1223/api/pos/posclose';
         $url = 'http://203.156.30.38:1223/api/pos/posclose';
+       // $url = 'http://141.98.19.240:1223/api/pos/posclose'; // current api use
         // Initializes a new cURL session
         $curl = curl_init($url);
 // Set the CURLOPT_RETURNTRANSFER option to true
@@ -524,8 +531,6 @@ class PosController extends Controller
                 }
             }
 
-
-
 //        print_r($model_header);
 //        echo "<br />";
 //        print_r($model_detail);
@@ -536,39 +541,74 @@ class PosController extends Controller
 //                $ch_amt = $change_amt->change_amount;
 //            }
 
+            // original before change
+
+//            if($model_header["order_no"] != null || $model_header["order_no"]!=""){
+//                $session = \Yii::$app->session;
+//                $session->setFlash('msg-index', 'slip_index.pdf');
+//                $session->setFlash('after-save', true);
+//                $session->setFlash('msg-is-do', $print_type_doc);
+//
+//                $this->renderPartial('_printtoindexgoapi', ['model' => $model_header, 'model_line' => $model_detail, 'change_amount' => $ch_amt, 'branch_id' => $branch_id]);
+//                if ($print_type_doc == 2) {
+//                    $session->setFlash('msg-index-do', 'slip_index_do.pdf');
+//                    $slip_path = '';
+//                    if ($branch_id == 1) {
+//                        $slip_path = '../web/uploads/company1/slip_do/slip_index_do.pdf';
+//                    } else if ($branch_id == 2) {
+//                        $slip_path = '../web/uploads/company2/slip_do/slip_index_do.pdf';
+//                    }
+//                    if (file_exists($slip_path)) {
+//                        unlink($slip_path);
+//                        //  sleep(4);
+//                        $this->createDoGoApi($model_header,$model_detail, $branch_id);
+//                    } else {
+//                        $this->createDoGoApi($model_header,$model_detail, $branch_id);
+//                    }
+//                }
+//                //  return;
+//                // ======= end call go api ======
+//
+//                $session = \Yii::$app->session;
+//                $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
+//            }
+
+            // end original
+
             if($model_header["order_no"] != null || $model_header["order_no"]!=""){
                 $session = \Yii::$app->session;
                 $session->setFlash('msg-index', 'slip_index.pdf');
                 $session->setFlash('after-save', true);
                 $session->setFlash('msg-is-do', $print_type_doc);
+                $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
 
-                $this->renderPartial('_printtoindexgoapi', ['model' => $model_header, 'model_line' => $model_detail, 'change_amount' => $ch_amt, 'branch_id' => $branch_id]);
-                if ($print_type_doc == 2) {
-                    $session->setFlash('msg-index-do', 'slip_index_do.pdf');
-                    $slip_path = '';
-                    if ($branch_id == 1) {
-                        $slip_path = '../web/uploads/company1/slip_do/slip_index_do.pdf';
-                    } else if ($branch_id == 2) {
-                        $slip_path = '../web/uploads/company2/slip_do/slip_index_do.pdf';
-                    }
-                    if (file_exists($slip_path)) {
-                        unlink($slip_path);
-                        //  sleep(4);
-                        $this->createDoGoApi($model_header,$model_detail, $branch_id);
-                    } else {
-                        $this->createDoGoApi($model_header,$model_detail, $branch_id);
-                    }
-                }
+             //  return $this->render('indextest_new', ['model' => $model_header, 'model_line' => $model_detail, 'change_amount' => $ch_amt, 'branch_id' => $branch_id]);
+                 return $this->redirect(['pos/indextest','id'=>$model_header['id']]);
+//                if ($print_type_doc == 2) {
+//                    $session->setFlash('msg-index-do', 'slip_index_do.pdf');
+//                    $slip_path = '';
+//                    if ($branch_id == 1) {
+//                        $slip_path = '../web/uploads/company1/slip_do/slip_index_do.pdf';
+//                    } else if ($branch_id == 2) {
+//                        $slip_path = '../web/uploads/company2/slip_do/slip_index_do.pdf';
+//                    }
+//                    if (file_exists($slip_path)) {
+//                        unlink($slip_path);
+//                        //  sleep(4);
+//                        $this->createDoGoApi($model_header,$model_detail, $branch_id);
+//                    } else {
+//                        $this->createDoGoApi($model_header,$model_detail, $branch_id);
+//                    }
+//                }
                 //  return;
                 // ======= end call go api ======
 
-                $session = \Yii::$app->session;
-                $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
+
             }
 
         }
 
-        return $this->redirect(['pos/indextest']);
+        //return $this->redirect(['pos/indextest',['model'=>null,'model_line'=>null,'change_amount'=>0,'branch_id'=>$branch_id]]);
     }
 
     public function actionPrint2()

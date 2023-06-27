@@ -140,4 +140,76 @@ class AdmintoolsController extends Controller
         }
         return $id;
     }
+
+    public function actionPullrouteissue($id){
+        $route_id = $id;
+        $company_id = 1;
+        $branch_id = 1;
+        $check_route_type = 0;
+        $status = 0;
+        if ($route_id != null) {
+            $issue_id = 0;
+            $check_route_type = \backend\models\Deliveryroute::find()->select('type_id')->where(['id' => $route_id])->one();
+            $model = \backend\models\Journalissue::find()->select(['id'])->where(['delivery_route_id'=>$route_id,'status'=>2])->andFilterWhere(['date(trans_date)'=>date('Y-m-d')])->all();
+            if($model){
+                foreach ($model as $value_model){
+                    $issue_id = $value_model->id;
+                    if($issue_id > 0){
+
+                        $model_update_issue_status = \common\models\JournalIssue::find()->where(['id' => $issue_id])->one();
+                        $model_issue_line = \backend\models\Journalissueline::find()->select(['id','product_id','qty','avl_qty','origin_qty'])->where(['issue_id' => $issue_id])->andFilterWhere(['>','origin_qty',0])->all();
+                        if($model_issue_line){
+                            foreach ($model_issue_line as $val2) {
+                                // if ($val2->avl_qty <= 0 || $val2->avl_qty == null) continue;
+
+                                // $old_stock = 0;
+
+                                //$model_check_has_old_product = \common\models\OrderStock::find()->where(['product_id' => $val2->product_id, 'route_id' => $route_id])->orderBy(['id'=>SORT_DESC])->one();
+                                $model_check_has_old_product = \common\models\OrderStock::find()->where(['product_id' => $val2->product_id, 'route_id' => $route_id])->andFilterWhere(['!=','date(trans_date)',date('Y-m-d')])->one();
+                                if ($model_check_has_old_product) {
+                                    $old_qty = $model_check_has_old_product->avl_qty;
+                                    $new_qty = ($old_qty + $val2->origin_qty);
+                                    $model_check_has_old_product->qty =  $val2->origin_qty;
+                                    $model_check_has_old_product->avl_qty = $new_qty;
+                                    $model_check_has_old_product->trans_date = date('Y-m-d H:i:s');
+                                    if($model_check_has_old_product->save(false)){
+                                        if ($model_update_issue_status) {
+                                            if ($model_update_issue_status->status != 2) {
+                                                $model_update_issue_status->status = 2;
+                                                if ($model_update_issue_status->save(false)) {
+                                                    $status = 1;
+                                                }
+                                            }
+                                        }
+                                        $this->updateStockCar($company_id, $branch_id, $val2->product_id, $route_id); // add new deduct stock from car warehouse
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+
+
+
+            //}
+        }
+        echo "status is ". $status;
+    }
+    public function updateStockCar($company_id, $branch_id, $product_id, $route_id)
+    {
+        if ($product_id != null && $route_id != null && $company_id && $branch_id) {
+            $car_warehouse = \backend\models\Warehouse::findWarehousecar($company_id, $branch_id);
+            if ($car_warehouse) {
+                $check_car_wh = \backend\models\Stocksum::find()->where(['route_id' => $route_id, 'product_id' => $product_id, 'warehouse_id' => $car_warehouse])->one();
+                if ($check_car_wh) {
+                    $check_car_wh->qty = 0; // reset stock
+                    $check_car_wh->save(false);
+                }
+                return true;
+            }
+        }
+        //   return false;
+    }
 }

@@ -134,9 +134,7 @@ $model_customer_loan = null;
     <!--    <script type="text/javascript" src="js/ThaiBath-master/thaibath.js"></script>-->
 </head>
 <body>
-<a href="<?=\yii\helpers\Url::to(['assetsitem/asset-request'],true)?>" class="btn btn-info">ใบแจ้งถังใหม่</a>
-<a href="<?=\yii\helpers\Url::to(['assetsitem/checkinprint'],true)?>" class="btn btn-info">รายการเช็คอินตำแหน่งร้าน</a>
-<form action="<?= \yii\helpers\Url::to(['assetsitem/print'], true) ?>" method="post"
+<form action="<?= \yii\helpers\Url::to(['assetsitem/checkinprint'], true) ?>" method="post"
       id="form-search">
     <input type="hidden" name="is_start_find" value="1">
     <div id="div1">
@@ -248,7 +246,7 @@ $model_customer_loan = null;
 <br/>
 <table class="table-header" width="100%">
     <tr>
-        <td style="text-align: center; font-size: 20px; font-weight: bold">เช็คอิน
+        <td style="text-align: center; font-size: 20px; font-weight: bold">เช็คอินตำแหน่งร้านค้า
         </td>
     </tr>
 </table>
@@ -267,7 +265,7 @@ $model_customer_loan = null;
 <br>
 
 <?php
-$model_asset_check = \common\models\CustomerAssetStatus::find()->where(['route_id' => $find_customer_id])->andFilterWhere(['BETWEEN', 'trans_date', $from_date, $to_date])->all();
+$model_asset_check = \common\models\CustomerCheckin::find()->where(['route_id' => $find_customer_id])->andFilterWhere(['BETWEEN', 'checkin_date', $from_date, $to_date])->all();
 ?>
 <table class="table-header" width="100%">
 </table>
@@ -276,9 +274,7 @@ $model_asset_check = \common\models\CustomerAssetStatus::find()->where(['route_i
         <td style="border: 1px solid gray;text-align: center"><b>ลำดับ</b></td>
         <td style="border: 1px solid gray;text-align: center"><b>วันที่</b></td>
         <td style="border: 1px solid gray;text-align: center"><b>ลูกค้า</b></td>
-        <td style="border: 1px solid gray;text-align: center"><b>ตำแหน่งลูกค้า</b></td>
         <td style="border: 1px solid gray;text-align: center"><b>จุดเช็คอิน</b></td>
-        <td style="text-align: center;border: 1px solid gray"><b>ชื่อถัง</b></td>
         <td style="text-align: center;border: 1px solid gray"><b>สายส่ง</b></td>
         <td style="text-align: center;border: 1px solid gray;width: 20%"><b>รูปภาพ</b></td>
     </tr>
@@ -287,11 +283,9 @@ $model_asset_check = \common\models\CustomerAssetStatus::find()->where(['route_i
         <?php $i += 1; ?>
         <tr>
             <td style="border: 1px solid gray;text-align: center;width: 5%"><?= $i ?></td>
-            <td style="border: 1px solid gray;text-align: center"><?= date('d-m-Y H:i:s', strtotime($value->trans_date)) ?></td>
+            <td style="border: 1px solid gray;text-align: center"><?= date('d-m-Y H:i:s', strtotime($value->checkin_date)) ?></td>
             <td style="border: 1px solid gray;text-align: center"><?= \backend\models\Customer::findName($value->customer_id) ?></td>
-            <td style="border: 1px solid gray;text-align: center"><?= \backend\models\Customer::findLocation($value->customer_id) ?></td>
             <td style="border: 1px solid gray;text-align: center"><a href="https://www.google.com/search?q=<?=$value->latlong?>" target="_blank"><?=$value->latlong?></a></td>
-            <td style="text-align: center;border: 1px solid gray;width: 10%"><?= \backend\models\Assetsitem::findFullName($value->cus_asset_id) ?></td>
             <td style="text-align: center;border: 1px solid gray;width: 10%"><?=\backend\models\Deliveryroute::findName($value->route_id)?></td>
             <td style="text-align: center;border: 1px solid gray;width: 20%">
                 <?php
