@@ -169,7 +169,7 @@ class ProductController extends Controller
         $data = [];
         $status = false;
 
-        if ($route_id != null) {
+        if ($route_id != null && $customer_id != null) {
             $trans_date = date('Y/m/d');
             $t_date = null;
             $exp_order_date = explode(' ', $issue_date);
@@ -223,7 +223,7 @@ class ProductController extends Controller
         $data = [];
         $status = false;
 
-        if ($route_id != null) {
+        if ($route_id != null && $customer_id != null) {
             $trans_date = date('Y/m/d');
             $t_date = null;
             $exp_order_date = explode(' ', $issue_date);
@@ -244,7 +244,8 @@ class ProductController extends Controller
 //            $model = \common\models\OrderStock::find()->select(['product_id', 'SUM(qty) as qty', 'SUM(avl_qty) as avl_qty'])->where(['route_id' => $route_id, 'date(trans_date)' => date('Y-m-d', strtotime($trans_date))])->groupBy(['product_id'])->all();
 //            if(!$model){
             $pre_date = date('Y-m-d', strtotime(date('Y-m-d') . " -2 day"));
-            $model = \common\models\OrderStock::find()->select(['product_id', 'SUM(qty) as qty', 'SUM(avl_qty) as avl_qty'])->where(['route_id' => $route_id])->andFilterWhere(['BETWEEN', 'date(trans_date)', $pre_date, date('Y-m-d', strtotime($trans_date))])->groupBy(['product_id'])->all();
+           // $model = \common\models\OrderStock::find()->select(['product_id', 'SUM(qty) as qty', 'SUM(avl_qty) as avl_qty'])->where(['route_id' => $route_id])->andFilterWhere(['BETWEEN', 'date(trans_date)', $pre_date, date('Y-m-d', strtotime($trans_date))])->groupBy(['product_id'])->all();
+            $model = \common\models\OrderStock::find()->select(['product_id', 'SUM(qty) as qty', 'SUM(avl_qty) as avl_qty'])->where(['route_id' => $route_id])->groupBy(['product_id'])->all();
             // }
 
             // $model = \common\models\QueryCustomerPrice::find()->all();

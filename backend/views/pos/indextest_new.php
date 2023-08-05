@@ -31,10 +31,11 @@ if (!empty(\Yii::$app->user->identity->branch_id)) {
 
 $model = null;
 $model_line = null;
-
+//$order_id = 205665;
 if ($order_id > 0 || $order_id != '') {
     $model = \backend\models\Orders::find()->select(['id', 'order_no', 'order_date', 'customer_id'])->where(['id' => $order_id])->one();
     $model_line = \backend\models\Orderline::find()->select(['id', 'product_id', 'qty', 'price', 'line_total'])->where(['order_id' => $order_id])->all();
+   // echo "order id is ".$order_id;
 }
 
 
@@ -65,7 +66,7 @@ $this->registerCss('
     <div class="col-lg-6" style="border-right: 1px dashed gray ">
         <div class="row">
             <div class="col-lg-12">
-                <h5><i class="fa fa-cubes"></i> รายการสินค้า <?= $order_id ?></h5>
+                <h5><i class="fa fa-cubes"></i> รายการสินค้า TEST</h5>
             </div>
         </div>
         <hr style="border-top: 1px dashed gray">
@@ -873,7 +874,7 @@ $this->registerCss('
 
 
 
-    <div id="print-slip" style="display: none; height: 280px;">
+    <div id="print-slip" style="display: ; height: 280px;">
         <input type="hidden" class="has-slip" value="<?= $model != null ? 1 : 0 ?>">
         <?php if ($model != null): ?>
             <table style="font-family: 'THSarabunNew';width: 250px;">
@@ -1142,27 +1143,27 @@ $this->registerCss('
 
 
 <?php
-echo PrintThis::widget([
-    'htmlOptions' => [
-        'id' => 'print-slip',
-        'btnClass' => 'btn btn-info',
-        'btnId' => 'btnPrintThis',
-        'btnText' => 'พิมพ์หน้านี้',
-        'btnIcon' => 'fa fa-print'
-    ],
-    'options' => [
-        'debug' => false,
-        'importCSS' => true,
-        'importStyle' => false,
-        // 'loadCSS' => "path/to/my.css",
-        'pageTitle' => "",
-        'removeInline' => false,
-        'printDelay' => 333,
-        'header' => null,
-        'formValues' => true,
-        'onafterprint'=> 'alert()',
-    ]
-]);
+//echo PrintThis::widget([
+//    'htmlOptions' => [
+//        'id' => 'print-slip',
+//        'btnClass' => 'btn btn-info',
+//        'btnId' => 'btnPrintThis',
+//        'btnText' => 'พิมพ์หน้านี้',
+//        'btnIcon' => 'fa fa-print'
+//    ],
+//    'options' => [
+//        'debug' => false,
+//        'importCSS' => true,
+//        'importStyle' => false,
+//        // 'loadCSS' => "path/to/my.css",
+//        'pageTitle' => "",
+//        'removeInline' => false,
+//        'printDelay' => 333,
+//        'header' => null,
+//        'formValues' => true,
+//        'onafterprint'=> 'alert()',
+//    ]
+//]);
 ?>
 <?php
 
@@ -1378,9 +1379,11 @@ var loop_nums = 0;
      });
       
       var has_slipx = $(".has-slip").val();
-      if(has_slipx > 0){
-          if(loop_nums ==1){
-             
+     // alert(has_slipx);
+      if(has_slipx > 1){
+          
+          if(loop_nums ==0){
+             alert('xxx');
              var restorepage = document.body.innerHTML;
              var printcontent = document.getElementById('print-slip').innerHTML;
              document.body.innerHTML = printcontent;
@@ -1391,13 +1394,13 @@ var loop_nums = 0;
              window.onafterprint = (event) => {
                  var xtime = $(".print-amount").val();
                  if(xtime == 2){
-                     alert(2);
+                     //alert(2);
                      
                      var printcontent2 = document.getElementById('print-slip-2').innerHTML;
                      document.body.innerHTML = printcontent2;
                      window.print();
                  }
-             // window.location.href = "http://localhost/icesystem/backend/web/index.php?r=pos%2Findextest&id=0";
+              window.location.href = "http://localhost/icesystem/backend/web/index.php?r=pos%2Findextest&id=0";
             };
               
             //  printContent("print-slip");

@@ -35,6 +35,7 @@ class JournalissueController extends Controller
                     'issueqrscanaddtemp' => ['POST'],
                     'issueconfirmcancel' => ['POST'],
                     'pullrouteissue' => ['POST'],
+                    'issueconfirmlasttest'=> ['POST'],
                 ],
             ],
         ];
@@ -459,6 +460,7 @@ class JournalissueController extends Controller
             //$data = ['issue_id'=> $issue_id,'user_id'=>$user_id];
 //            $has_order_stock = $this->checkhasOrderStock($route_id, $issue_id);
 //            if ($has_order_stock == 0) {
+                sleep(1);
                 $check_route_type = \backend\models\Deliveryroute::find()->select('type_id')->where(['id' => $route_id])->one();
                 $model_update_issue_status = \common\models\JournalIssue::find()->where(['id' => $issue_id])->one();
            // $model_issue_line = \backend\models\Journalissueline::find()->select(['id','product_id','qty','avl_qty','origin_qty'])->where(['issue_id' => $issue_id])->andFilterWhere(['>','origin_qty',0])->all();
@@ -1302,7 +1304,7 @@ class JournalissueController extends Controller
             $car_warehouse = \backend\models\Warehouse::findWarehousecar($company_id, $branch_id);
             if ($car_warehouse) {
                 $check_car_wh = \backend\models\Stocksum::find()->where(['route_id' => $route_id, 'product_id' => $product_id, 'warehouse_id' => $car_warehouse])->one();
-                if ($check_car_wh) {
+                if ($check_car_wh != null) {
                     $check_car_wh->qty = 0; // reset stock
                     $check_car_wh->save(false);
                 }
@@ -1571,7 +1573,7 @@ class JournalissueController extends Controller
 
                         $model_update_issue_status = \common\models\JournalIssue::find()->where(['id' => $issue_id])->one();
                         $model_issue_line = \backend\models\Journalissueline::find()->select(['id','product_id','qty','avl_qty','origin_qty'])->where(['issue_id' => $issue_id])->andFilterWhere(['>','origin_qty',0])->all();
-                        if($model_issue_line){
+                        if($model_issue_line != null){
                             foreach ($model_issue_line as $val2) {
                                 // if ($val2->avl_qty <= 0 || $val2->avl_qty == null) continue;
 
@@ -1579,8 +1581,8 @@ class JournalissueController extends Controller
 
                                 //$model_check_has_old_product = \common\models\OrderStock::find()->where(['product_id' => $val2->product_id, 'route_id' => $route_id])->orderBy(['id'=>SORT_DESC])->one();
                                 $model_check_has_old_product = \common\models\OrderStock::find()->where(['product_id' => $val2->product_id, 'route_id' => $route_id])->andFilterWhere(['!=','date(trans_date)',date('Y-m-d')])->one();
-                                if ($model_check_has_old_product) {
-                                    $old_qty = $model_check_has_old_product->avl_qty;
+                                if ($model_check_has_old_product != null) {
+                                    $old_qty = 0; // $model_check_has_old_product->avl_qty;
                                     $new_qty = ($old_qty + $val2->origin_qty);
                                     $model_check_has_old_product->qty =  $val2->origin_qty;
                                     $model_check_has_old_product->avl_qty = $new_qty;
@@ -1596,6 +1598,8 @@ class JournalissueController extends Controller
                                         }
                                         $this->updateStockCar($company_id, $branch_id, $val2->product_id, $route_id); // add new deduct stock from car warehouse
                                     }
+                                }else{
+                                    $status +=100;
                                 }
                             }
                         }
@@ -1607,5 +1611,57 @@ class JournalissueController extends Controller
             //}
         }
         return ['status' => $status];
+    }
+    public function actionIssueconfirmlasttest()
+    {
+        $issue_id = null;
+        $user_id = null;
+        $route_id = null;
+        $company_id = 0;
+        $branch_id = 0;
+        $status = 0;
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $req_data = \Yii::$app->request->getBodyParams();
+        $route_id = $req_data['route_id'];
+        $issue_id = $req_data['issue_id'];
+        $user_id = $req_data['user_id'];
+        $company_id = $req_data['company_id'];
+        $branch_id = $req_data['branch_id'];
+        $ix=0;
+        $default_wh = 0; // 1 6
+//        if ($company_id == 1 && $branch_id == 2) {
+//            $default_wh = 5;
+//        }
+        // $default_wh = \backend\models\Warehouse::findWarehousecar($company_id, $branch_id);
+
+        $data = [];
+        if ($issue_id != null && $user_id != null) {
+            //$data = ['issue_id'=> $issue_id,'user_id'=>$user_id];
+//            $has_order_stock = $this->checkhasOrderStock($route_id, $issue_id);
+//            if ($has_order_stock == 0) {
+
+            $check_route_type = \backend\models\Deliveryroute::find()->select('type_id')->where(['id' => $route_id])->one();
+            $model_update_issue_status = \common\models\JournalIssue::find()->where(['id' => $issue_id])->one();
+            // $model_issue_line = \backend\models\Journalissueline::find()->select(['id','product_id','qty','avl_qty','origin_qty'])->where(['issue_id' => $issue_id])->andFilterWhere(['>','origin_qty',0])->all();
+            $model_issue_line = \common\models\QueryRouteDailyForIssue::find()->select(['id','product_id','qty','avl_qty','origin_qty'])->where(['id' => $issue_id])->all();
+
+            if($model_issue_line != null){
+                foreach ($model_issue_line as $val2) {
+                    //array_push($data,['product_id'=>$val2->product_id]);
+                    // if ($val2->avl_qty <= 0 || $val2->avl_qty == null) continue;
+                    // $old_stock = 0;
+                    //$model_check_has_old_product = \common\models\OrderStock::find()->where(['product_id' => $val2->product_id, 'route_id' => $route_id])->orderBy(['id'=>SORT_DESC])->one();
+                    $model_check_has_old_product = \common\models\OrderStock::find()->where(['product_id' => $val2->product_id, 'route_id' => $route_id])->one();
+                    if ($model_check_has_old_product != null) {
+                         array_push($data,['product_id'=>$model_check_has_old_product->product_id,'qty'=>($model_check_has_old_product->avl_qty + $val2->origin_qty)]);
+                    } else {
+
+                    }
+                }
+            }
+
+            //}
+        }
+        return ['status' => $status, 'data' => $data];
     }
 }

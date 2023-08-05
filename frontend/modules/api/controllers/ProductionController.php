@@ -1205,7 +1205,6 @@ class ProductionController extends Controller
                             \common\models\ProductionStatus::updateAll(['color_status' => 'G', 'start_date' => $replace_date, 'end_date' => NULL], ['loc_id' => $model_product_loc_id->production_loc_id]); // return production status to green color
                         }
                     }
-
                 }
             }
             array_push($data, ['journal_no' => $journal_no]);

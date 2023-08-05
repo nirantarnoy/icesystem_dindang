@@ -43,7 +43,7 @@ class PosController extends Controller
                         'actions' => [
                             'logout', 'index', 'indextest', 'indextest2', 'print', 'printindex', 'dailysum', 'getcustomerprice', 'getoriginprice', 'closesale', 'cancelorder', 'manageclose',
                             'salehistory', 'getbasicprice', 'delete', 'orderedit', 'posupdate', 'posttrans', 'saledailyend', 'saledailyend2', 'printdo', 'createissue', 'updatestock', 'listissue', 'updateissue', 'printsummary', 'printcarsummary'
-                            , 'finduserdate', 'editsaleclose', 'createscreenshort', 'print2', 'calcloseshift', 'closesaletest'
+                            , 'finduserdate', 'editsaleclose', 'createscreenshort', 'print2', 'calcloseshift', 'closesaletest','printtestnew','printtestnewdo'
                         ],
                         'allow' => true,
                         'roles' => ['@'],
@@ -426,7 +426,7 @@ class PosController extends Controller
         // $this->render('_printtoindex2', ['model' => $model, 'model_line' => $model_line, 'change_amount' => $ch_amt, $print_type_doc]);
     }
 
-    public function actionClosesaletest()
+    public function actionClosesaletestold()
     {
 
         $company_id = 0;
@@ -494,10 +494,10 @@ class PosController extends Controller
             "payment_method_id" => (int)$payment_type,
         ];
 
-       // $url = 'http://192.168.60.180:1223/api/pos/posclose';
-        //$url = 'http://103.253.73.108:1223/api/pos/posclose';
-        $url = 'http://203.156.30.38:1223/api/pos/posclose';
-       // $url = 'http://141.98.19.240:1223/api/pos/posclose'; // current api use
+//       // $url = 'http://192.168.60.180:1223/api/pos/posclose';
+//        //$url = 'http://103.253.73.108:1223/api/pos/posclose';
+//        $url = 'http://203.156.30.38:12234/api/pos/posclose';
+        $url = 'http://141.98.19.240:1223/api/pos/posclose'; // current api use
         // Initializes a new cURL session
         $curl = curl_init($url);
 // Set the CURLOPT_RETURNTRANSFER option to true
@@ -519,17 +519,19 @@ class PosController extends Controller
         curl_close($curl);
 
         //echo $response . PHP_EOL;
+        $after_save_order_id = 0;
         $res_data = json_decode($response, true);
         // print_r($res_data);
         if($res_data != null){
-            $model_header = ["id"=>$res_data["id"],"order_no"=>$res_data["order_no"],"order_date"=>date('Y-m-d H:i:s'),"customer_id"=>$res_data["customer_id"],"time_used"=>$res_data["time_use"]];
-            $model_detail = [];
-            $lines = $res_data["order_line"];
-            if($lines != null){
-                for($i=0;$i<=count($lines)-1;$i++){
-                    array_push($model_detail,["id"=>$lines[$i]["id"],"product_id"=>$lines[$i]["product_id"],"qty"=>$lines[$i]["qty"],"price"=>$lines[$i]["price"]]);
-                }
-            }
+//            $model_header = ["id"=>$res_data["id"],"order_no"=>$res_data["order_no"],"order_date"=>date('Y-m-d H:i:s'),"customer_id"=>$res_data["customer_id"],"time_used"=>$res_data["time_use"]];
+//            $model_detail = [];
+//            $lines = $res_data["order_line"];
+            $after_save_order_id = $res_data["id"];
+//            if($lines != null){
+//                for($i=0;$i<=count($lines)-1;$i++){
+//                    array_push($model_detail,["id"=>$lines[$i]["id"],"product_id"=>$lines[$i]["product_id"],"qty"=>$lines[$i]["qty"],"price"=>$lines[$i]["price"]]);
+//                }
+//            }
 
 //        print_r($model_header);
 //        echo "<br />";
@@ -575,15 +577,17 @@ class PosController extends Controller
 
             // end original
 
-            if($model_header["order_no"] != null || $model_header["order_no"]!=""){
-                $session = \Yii::$app->session;
+            //if($model_header["order_no"] != null || $model_header["order_no"]!=""){
+                if(0 > 0){
+                    $session = \Yii::$app->session;
                 $session->setFlash('msg-index', 'slip_index.pdf');
                 $session->setFlash('after-save', true);
                 $session->setFlash('msg-is-do', $print_type_doc);
                 $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
 
-             //  return $this->render('indextest_new', ['model' => $model_header, 'model_line' => $model_detail, 'change_amount' => $ch_amt, 'branch_id' => $branch_id]);
-                 return $this->redirect(['pos/indextest','id'=>$model_header['id']]);
+          //      return $this->render('indextest_new', ['model' => $model_header, 'model_line' => $model_detail, 'change_amount' => $ch_amt, 'branch_id' => $branch_id]);
+                return $this->render('indextest_new', ['order_id' => $res_data['id']]);
+                //          return $this->redirect(['pos/indextest','id'=>$model_header['id']]);
 //                if ($print_type_doc == 2) {
 //                    $session->setFlash('msg-index-do', 'slip_index_do.pdf');
 //                    $slip_path = '';
@@ -603,10 +607,128 @@ class PosController extends Controller
                 //  return;
                 // ======= end call go api ======
 
-
             }
 
         }
+        return $this->redirect(['pos/printtestnew', 'order'=>$after_save_order_id,'print_type_doc'=>$print_type_doc]);
+
+        //return $this->redirect(['pos/indextest',['model'=>null,'model_line'=>null,'change_amount'=>0,'branch_id'=>$branch_id]]);
+    }
+
+    public function actionClosesaletest()
+    {
+
+        $company_id = 0;
+        $branch_id = 0;
+        $default_warehouse = 0; // 6
+        $user_id = 1;
+        if (!empty(\Yii::$app->user->identity->company_id)) {
+            $company_id = \Yii::$app->user->identity->company_id;
+        }
+        if (!empty(\Yii::$app->user->identity->branch_id)) {
+            $branch_id = \Yii::$app->user->identity->branch_id;
+            // $warehouse_primary = \backend\models\Warehouse::findPrimary($company_id, $branch_id);
+            //$default_warehouse = 6;
+        }
+        if (!empty(\Yii::$app->user->id)) {
+            $user_id = \Yii::$app->user->id;
+        }
+
+        //  $warehouse_primary = 6;
+
+        //   $issue_no = '';
+
+        $pay_total_amount = \Yii::$app->request->post('sale_total_amount');
+        $pay_amount = \Yii::$app->request->post('sale_pay_amount');
+        // $pay_change = \Yii::$app->request->post('sale_pay_change');
+        $payment_type = \Yii::$app->request->post('sale_pay_type');
+
+        $customer_id = \Yii::$app->request->post('customer_id');
+        $product_list = \Yii::$app->request->post('cart_product_id');
+        $line_qty = \Yii::$app->request->post('cart_qty');
+        $line_price = \Yii::$app->request->post('cart_price');
+
+        $print_type_doc = \Yii::$app->request->post('print_type_doc');
+        $default_warehouse = \Yii::$app->request->post('default_warehouse_id');
+
+        // echo $print_type_doc;return;
+        $pos_date = \Yii::$app->request->post('sale_pay_date');
+
+        //  echo $customer_id;return;
+//        $sale_date = date('Y-m-d');
+//        $sale_time = date('H:i:s');
+//        $x_date = explode('/', $pos_date);
+//        if (count($x_date) > 1) {
+//            $sale_date = $x_date[2] . '/' . $x_date[1] . '/' . $x_date[0];
+//        }
+        // ================================== call go api ======
+
+        $data = [];
+
+        if($product_list !=null){
+            for($x=0;$x<=count($product_list)-1;$x++){
+                array_push($data, ["product_id" => (int)$product_list[$x], "qty" => (float)$line_qty[$x], "price" => (float)$line_price[$x]]);
+            }
+        }
+        $xdata = [
+            'customer_id' => (int)$customer_id,
+            "data_list" => $data,
+            "sale_pay_type" => 1,
+            "sale_total_amount" => (float)$pay_total_amount,
+            "sale_pay_amount" => (float)$pay_amount,
+            "user_id" => (int)$user_id,
+            "warehouse_id" => (int)$default_warehouse,
+            "company_id" => (int)$company_id,
+            "branch_id" => (int)$branch_id,
+            "payment_method_id" => (int)$payment_type,
+        ];
+
+//       // $url = 'http://192.168.60.180:1223/api/pos/posclose';
+//        //$url = 'http://103.253.73.108:1223/api/pos/posclose';
+//        $url = 'http://203.156.30.38:12234/api/pos/posclose';
+        $url = 'http://141.98.19.240:1223/api/pos/posclose'; // current api use
+        // Initializes a new cURL session
+        $curl = curl_init($url);
+// Set the CURLOPT_RETURNTRANSFER option to true
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+// Set the CURLOPT_POST option to true for POST request
+        curl_setopt($curl, CURLOPT_POST, true);
+// Set the request data as JSON using json_encode function
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($xdata));
+// Set custom headers for RapidAPI Auth and Content-Type header
+        curl_setopt($curl, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json'
+        ]);
+// Execute cURL request with all previous settings
+        $start_time = microtime(true);
+        $response = curl_exec($curl);
+        $end_time = microtime(true);
+        echo "time used is " . ($end_time - $start_time) . "<br />";
+// Close cURL session
+        curl_close($curl);
+
+        //echo $response . PHP_EOL;
+        $after_save_order_id = 0;
+        $res_data = json_decode($response, true);
+        // print_r($res_data);
+        if($res_data != null){
+            $after_save_order_id = $res_data["id"];
+//            if(0 > 0){
+//                $session = \Yii::$app->session;
+//                $session->setFlash('msg-index', 'slip_index.pdf');
+//                $session->setFlash('after-save', true);
+//                $session->setFlash('msg-is-do', $print_type_doc);
+//                $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
+//                return $this->render('indextest_new', ['order_id' => $res_data['id']]);
+//
+//
+//            }
+
+        }
+        if($after_save_order_id == null || $after_save_order_id == 0){
+            return $this->redirect(['pos/indextest',['id'=>0]]);
+        }
+        return $this->redirect(['pos/printtestnew', 'order'=>$after_save_order_id,'print_type_doc'=>$print_type_doc]);
 
         //return $this->redirect(['pos/indextest',['model'=>null,'model_line'=>null,'change_amount'=>0,'branch_id'=>$branch_id]]);
     }
@@ -615,6 +737,28 @@ class PosController extends Controller
     {
         $id = \Yii::$app->request->post('order_id');
         $ch_amt = \Yii::$app->request->post('ch_amt');
+        $branch_id = 1;
+        $model = \backend\models\Orders::find()->where(['id' => $id])->one();
+        $model_line = \backend\models\Orderline::find()->where(['order_id' => $id])->all();
+        //sleep(3);
+        $this->layout = 'main_print';
+        return $this->render('_printoindex_screen2', ['model' => $model, 'model_line' => $model_line, 'change_amount' => $ch_amt, 'branch_id' => $branch_id]);
+    }
+    public function actionPrinttestnew($order,$print_type_doc)
+    {
+        $id = $order;
+        $ch_amt = 0;
+        $branch_id = 1;
+        $model = \backend\models\Orders::find()->where(['id' => $id])->one();
+        $model_line = \backend\models\Orderline::find()->where(['order_id' => $id])->all();
+        //sleep(3);
+        $this->layout = 'main_print';
+        return $this->render('_printoindex_screen', ['model' => $model, 'model_line' => $model_line, 'change_amount' => $ch_amt, 'branch_id' => $branch_id,'print_type'=>$print_type_doc]);
+    }
+    public function actionPrinttestnewdo($order)
+    {
+        $id = $order;
+        $ch_amt = 0;
         $branch_id = 1;
         $model = \backend\models\Orders::find()->where(['id' => $id])->one();
         $model_line = \backend\models\Orderline::find()->where(['order_id' => $id])->all();
@@ -1257,6 +1401,7 @@ class PosController extends Controller
         $line_production_qty = \Yii::$app->request->post('line_production_qty');
         $line_cash_qty = \Yii::$app->request->post('line_cash_qty');
         $line_credit_qty = \Yii::$app->request->post('line_credit_qty');
+        $line_car_issue_qty = \Yii::$app->request->post('line_car_issue_qty');
         $line_cash_amount = \Yii::$app->request->post('line_cash_amount');
         $line_credit_amount = \Yii::$app->request->post('line_credit_amount');
         $line_repack_qty = \Yii::$app->request->post('line_repack_qty');
@@ -1343,7 +1488,7 @@ class PosController extends Controller
 
         if ($res > 0) {
 
-            if ($this->saveTransactionsalepos($line_prod_id, $line_balance_in, $line_balance_out, $line_production_qty, $line_cash_qty, $line_credit_qty, $line_repack_qty, $line_refill_qty, $line_scrap_qty, $line_stock_count, $login_date, $line_transfer_qty)) {
+            if ($this->saveTransactionsalepos($line_prod_id, $line_balance_in, $line_balance_out, $line_production_qty, $line_cash_qty, $line_credit_qty, $line_repack_qty, $line_refill_qty, $line_scrap_qty, $line_stock_count, $login_date, $line_transfer_qty,$line_car_issue_qty)) {
                 $session = \Yii::$app->session;
                 $session->setFlash('after-save', true);
                 $session->setFlash('msg', 'บันทึกจบรายการเรียบร้อย');
@@ -1369,6 +1514,7 @@ class PosController extends Controller
         $line_production_qty = \Yii::$app->request->post('line_production_qty');
         $line_cash_qty = \Yii::$app->request->post('line_cash_qty');
         $line_credit_qty = \Yii::$app->request->post('line_credit_qty');
+        $line_car_issue_qty = \Yii::$app->request->post('line_car_issue_qty');
         $line_transfer_qty = \Yii::$app->request->post('line_transfer_qty');
         $line_credit_amount = \Yii::$app->request->post('line_credit_amount');
         $line_repack_qty = \Yii::$app->request->post('line_repack_qty');
@@ -1378,7 +1524,7 @@ class PosController extends Controller
         $line_diff = \Yii::$app->request->post('line_diff');
         $login_date = \Yii::$app->request->post('login_date');
 
-        if ($this->saveTransactionsalepos($line_prod_id, $line_balance_in, $line_balance_out, $line_production_qty, $line_cash_qty, $line_credit_qty, $line_repack_qty, $line_refill_qty, $line_scrap_qty, $line_stock_count, $login_date, $line_transfer_qty)) {
+        if ($this->saveTransactionsalepos($line_prod_id, $line_balance_in, $line_balance_out, $line_production_qty, $line_cash_qty, $line_credit_qty, $line_repack_qty, $line_refill_qty, $line_scrap_qty, $line_stock_count, $login_date, $line_transfer_qty,$line_car_issue_qty)) {
             $session = \Yii::$app->session;
             $session->setFlash('after-save', true);
             $session->setFlash('msg', 'บันทึกจบรายการเรียบร้อย');
@@ -1389,7 +1535,7 @@ class PosController extends Controller
         }
     }
 
-    function saveTransactionsalepos($line_prod_id, $line_balance_in, $line_balance_out, $line_production_qty, $line_cash_qty, $line_credit_qty, $line_repack_qty, $line_refill_qty, $line_scrap_qty, $line_stock_count, $login_date, $line_transfer_qty)
+    function saveTransactionsalepos($line_prod_id, $line_balance_in, $line_balance_out, $line_production_qty, $line_cash_qty, $line_credit_qty, $line_repack_qty, $line_refill_qty, $line_scrap_qty, $line_stock_count, $login_date, $line_transfer_qty,$line_car_issue_qty)
     {
         $company_id = 0;
         $branch_id = 0;
@@ -1436,7 +1582,7 @@ class PosController extends Controller
                     $model_trans->prodrec_qty = $line_production_qty[$i];
                     $model_trans->reprocess_qty = $line_repack_qty[$i];
                     $model_trans->return_qty = $this->getProdReprocessCarDaily($line_prod_id[$i], $login_date, date('Y-m-d H:i:s'), $company_id, $branch_id);
-                    $model_trans->issue_car_qty = $line_credit_qty[$i];//$isssue_car_qty;
+                    $model_trans->issue_car_qty = $line_car_issue_qty[$i];//$isssue_car_qty;
                     $model_trans->issue_transfer_qty = $line_transfer_qty[$i];// $this->getTransferout($value->product_id, $cal_date);
                     $model_trans->issue_refill_qty = $line_refill_qty[$i];
                     $model_trans->scrap_qty = $line_scrap_qty[$i];//$this->getScrapDaily($value->product_id, $user_login_datetime, $cal_date);
@@ -1601,7 +1747,7 @@ class PosController extends Controller
                 $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
 
 
-                return $this->redirect(['pos/indextest']);
+                return $this->redirect(['pos/indextest','id'=>0]);
             }
 
         }
@@ -1948,6 +2094,8 @@ class PosController extends Controller
         $to_date = \Yii::$app->request->post('to_date');
         $find_sale_type = \Yii::$app->request->post('find_sale_type');
         $find_user_id = \Yii::$app->request->post('find_user_id');
+        $is_invoice_req = \Yii::$app->request->post('is_invoice_req');
+        $btn_order_type = \Yii::$app->request->post('btn_order_type');
         return $this->render('_print_sale_summary', [
             'from_date' => $from_date,
             'to_date' => $to_date,
@@ -1955,6 +2103,8 @@ class PosController extends Controller
             'find_user_id' => $find_user_id,
             'company_id' => $company_id,
             'branch_id' => $branch_id,
+            'is_invoice_req' => $is_invoice_req,
+            'btn_order_type'=>$btn_order_type,
         ]);
     }
 
@@ -1974,6 +2124,8 @@ class PosController extends Controller
         $to_date = \Yii::$app->request->post('to_date');
         //  $find_sale_type = \Yii::$app->request->post('find_sale_type');
         $find_user_id = \Yii::$app->request->post('find_user_id');
+        $is_invoice_req = \Yii::$app->request->post('is_invoice_req');
+        $btn_order_type = \Yii::$app->request->post('btn_order_type');
         return $this->render('_print_sale_car_summary', [
             'from_date' => $from_date,
             'to_date' => $to_date,
@@ -1981,6 +2133,8 @@ class PosController extends Controller
             'find_user_id' => $find_user_id,
             'company_id' => $company_id,
             'branch_id' => $branch_id,
+            'is_invoice_req' => $is_invoice_req,
+            'btn_order_type'=>$btn_order_type,
         ]);
     }
 
@@ -2174,11 +2328,11 @@ class PosController extends Controller
 
         if ($user_id != null) {
 
-
             \common\models\SalePosCloseCashQty::deleteAll(['user_id' => $user_id]);
             \common\models\SalePosCloseCreditQty::deleteAll(['user_id' => $user_id]);
             \common\models\SalePosCloseCashAmount::deleteAll(['user_id' => $user_id]);
             \common\models\SalePosCloseCreditAmount::deleteAll(['user_id' => $user_id]);
+            \common\models\SalePosCloseIssueCarQty::deleteAll(['user_id' => $user_id]);
 
             $sql = "SELECT order_line.product_id, SUM(order_line.qty) as line_total_cash";
             $sql .= " FROM orders inner join order_line on orders.id = order_line.order_id";
@@ -2235,6 +2389,36 @@ class PosController extends Controller
                         $model_x->start_date = date('Y-m-d H:i:s', strtotime($user_login_datetime));
                         $model_x->end_date = date('Y-m-d H:i:s');
                         $model_x->qty = $qty2;
+                        $model_x->trans_date = date('Y-m-d H:i:s');
+                        $model_x->user_id = $user_id;
+                        $model_x->save(false);
+                    }
+
+                }
+            }
+
+            $sql20 = "SELECT order_line.product_id, SUM(order_line.qty) as line_total_credit";
+            $sql20 .= " FROM orders inner join order_line on orders.id = order_line.order_id";
+            $sql20 .= " WHERE orders.sale_channel_id = 2 and orders.status <> 3 ";
+            $sql20 .= " AND orders.order_channel_id > 0";
+            $sql20 .= " AND orders.order_date>=" . "'" . date('Y-m-d H:i:s', strtotime($user_login_datetime)) . "'";
+            $sql20 .= " AND orders.order_date<=" . "'" . date('Y-m-d H:i:s') . "'";
+            $sql20 .= " AND orders.created_by=" . $user_id;
+            $sql20 .= " GROUP BY order_line.product_id";
+
+            $query20 = \Yii::$app->db->createCommand($sql20);
+            $model20 = $query20->queryAll();
+            if ($model20) {
+                for ($i = 0; $i <= count($model20) - 1; $i++) {
+                    $product_id20 = $model20[$i]['product_id'];
+                    $qty20 = $model20[$i]['line_total_credit'];
+
+                    if ($product_id20 != null) {
+                        $model_x = new \common\models\SalePosCloseIssueCarQty();
+                        $model_x->product_id = $product_id20;
+                        $model_x->start_date = date('Y-m-d H:i:s', strtotime($user_login_datetime));
+                        $model_x->ent_date = date('Y-m-d H:i:s');
+                        $model_x->qty = $qty20;
                         $model_x->trans_date = date('Y-m-d H:i:s');
                         $model_x->user_id = $user_id;
                         $model_x->save(false);

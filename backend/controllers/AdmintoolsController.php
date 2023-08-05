@@ -103,15 +103,27 @@ class AdmintoolsController extends Controller
                     foreach ($model as $value) {
                         $model_update = \backend\models\Stocksum::find()->where(['product_id' => $value->product_id, 'warehouse_id' => $reprocess_wh,'company_id'=>$company_id,'branch_id'=>$branch_id])->one();
                         if ($model_update) {
-                            $model_update->qty = ($model_update->qty - $value->qty);
-                            if ($model_update->save(false)) {
-                                $res += 1;
-                                 // return qty to order stock
+                            if($model_update->qty > 0){
+                                $model_update->qty = ($model_update->qty - $value->qty);
+                                if ($model_update->save(false)) {
+                                    $res += 1;
+                                    // return qty to order stock
 
-                               // $model_return = \common\models\OrderStock::find()->where(['product_id'=>$value->product_id,'route_id'=>$route_id,'date(trans_date)'=>date('Y-m-d')])->max('id');
-                                $model_return = \common\models\OrderStock::find()->select('id')->where(['product_id'=>$value->product_id,'route_id'=>$route_id,'date(trans_date)'=>date('Y-m-d')])->one();
+                                    // $model_return = \common\models\OrderStock::find()->where(['product_id'=>$value->product_id,'route_id'=>$route_id,'date(trans_date)'=>date('Y-m-d')])->max('id');
+                                    $model_return = \common\models\OrderStock::find()->where(['product_id'=>$value->product_id,'route_id'=>$route_id])->one();
+                                    if($model_return){
+                                        $model_return->avl_qty = $value->qty;
+                                        $model_return->save(false);
+                                        //\common\models\OrderStock::updateAll(['avl_qty'=>$value->qty],['id'=>$model_return->id]);
+                                    }
+                                }
+                            }else{
+                                $model_return = \common\models\OrderStock::find()->where(['product_id'=>$value->product_id,'route_id'=>$route_id])->one();
                                 if($model_return){
-                                    \common\models\OrderStock::updateAll(['avl_qty'=>$value->qty],['id'=>$model_return->id]);
+                                    $model_return->avl_qty = $value->qty;
+                                    if($model_return->save(false)){
+                                        $res += 1;
+                                    }
                                 }
                             }
                         }

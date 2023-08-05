@@ -133,7 +133,13 @@ if ($model_c_login != null) {
 <div>
 
     <form action="<?= \yii\helpers\Url::to(['pos/printsummary'], true) ?>" method="post" id="form-search">
+        <input type="hidden" class="btn-order-type" name="btn_order_type" value="<?= $btn_order_type ?>">
         <table class="table-header" style="width: 100%;font-size: 18px;" border="0">
+            <tr>
+                <td style="padding: 10px;"><span>เรียงตาม <div class="btn-group"><div
+                                    class="btn btn-sm <?=$btn_order_type==1?"btn-success":"btn-default"?> btn-order-date">วันที่ขาย</div><div
+                                    class="btn btn-sm <?=$btn_order_type==2?"btn-success":"btn-default"?> btn-order-price">ราคาขาย</div></div></span></td>
+            </tr>
             <tr>
 
                 <td style="width: 20%">
@@ -218,6 +224,22 @@ if ($model_c_login != null) {
                     ?>
                 </td>
                 <td>
+                    <?php
+                    echo \kartik\select2\Select2::widget([
+                        'name' => 'is_invoice_req',
+                        'data' => \yii\helpers\ArrayHelper::map(\backend\helpers\CustomerInvoiceReqType::asArrayObject(), 'id', 'name'),
+                        'value' => $is_invoice_req,
+                        'options' => [
+                            'placeholder' => '--ทั้งหมด--'
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'multiple' => false,
+                        ]
+                    ]);
+                    ?>
+                </td>
+                <td>
                     <input type="submit" class="btn btn-primary" value="ค้นหา">
                 </td>
                 <td style="width: 25%"></td>
@@ -273,7 +295,7 @@ if ($model_c_login != null) {
                     <td colspan="7"><b><?= $line_product_code ?></b> <span
                                 style="color: darkblue"> <?= $line_product_name ?></span></td>
                 </tr>
-                <?php $find_order = getOrder($value->product_id, $from_date, $to_date, $find_sale_type, $find_user_id, $company_id, $branch_id); ?>
+                <?php $find_order = getOrder($value->product_id, $from_date, $to_date, $find_sale_type, $find_user_id, $company_id, $branch_id, $is_invoice_req, $btn_order_type); ?>
                 <?php if ($find_order != null): ?>
                     <?php
                     $loop_count = count($find_order);
@@ -355,11 +377,12 @@ if ($model_c_login != null) {
     //echo '<script src="../web/plugins/jquery/jquery.min.js"></script>';
     //echo '<script type="text/javascript">alert();</script>';
     ?>
-    </body>
+</div>
+</body>
 </html>
 
 <?php
-function getOrder($product_id, $f_date, $t_date, $find_sale_type, $find_user_id, $company_id, $branch_id)
+function getOrder($product_id, $f_date, $t_date, $find_sale_type, $find_user_id, $company_id, $branch_id, $is_invoice_req,$btn_order_type)
 {
     $data = [];
     $sql = "SELECT t2.order_no, t3.code , t3.name, t1.qty, t1.price, t2.order_date, t2.order_channel_id 
@@ -385,7 +408,18 @@ function getOrder($product_id, $f_date, $t_date, $find_sale_type, $find_user_id,
     if ($find_user_id != null) {
         $sql .= " AND t2.created_by=" . $find_user_id;
     }
-    $sql.=" ORDER BY t2.order_no ASC";
+    if ($is_invoice_req != null) {
+        $sql .= " AND t3.is_invoice_req =" . $is_invoice_req;
+    }
+    // $sql .=" ORDER BY t1.price ASC";
+    if($btn_order_type == 1){
+        $sql .= " ORDER BY t2.order_no ASC";
+    }else if($btn_order_type == 2){
+        $sql .= " ORDER BY t1.price ASC";
+    }else{
+        $sql .= " ORDER BY t2.order_no ASC";
+    }
+
     $query = \Yii::$app->db->createCommand($sql);
     $model = $query->queryAll();
     if ($model) {
@@ -421,6 +455,29 @@ $js = <<<JS
     exclude: ".noExl",
     name: "Excel Document Name"
   });
+});
+$(".btn-order-date").click(function(){
+    $(".btn-order-type").val(1);
+    if($(".btn-order-price").hasClass("btn-success")){
+        $(".btn-order-price").removeClass("btn-success");
+        $(".btn-order-price").addClass("btn-default");
+    }
+    if($(this).hasClass("btn-default")){
+        $(this).removeClass("btn-default")
+        $(this).addClass("btn-success");
+    }
+    
+});
+$(".btn-order-price").click(function(){
+    $(".btn-order-type").val(2);
+      if($(".btn-order-date").hasClass("btn-success")){
+        $(".btn-order-date").removeClass("btn-success");
+        $(".btn-order-date").addClass("btn-default");
+    }
+    if($(this).hasClass("btn-default")){
+        $(this).removeClass("btn-default")
+        $(this).addClass("btn-success");
+    }
 });
 function printContent(el)
       {

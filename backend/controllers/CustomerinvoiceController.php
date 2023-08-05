@@ -160,18 +160,30 @@ class CustomerinvoiceController extends Controller
                         if ($check_is_cus_car->is_show_pos == 0 || $check_is_cus_car->is_show_pos == null) { // route
                             //  $customer_remain_amount = \common\models\QuerySalePaySummary::find()->where(['customer_id' => $model->customer_id, 'order_id' => $xlist[$i]])->one();
                             //    $customer_remain_amount = \common\models\OrderLine::find()->where(['customer_id' => $model->customer_id, 'order_id' => $xlist[$i]])->sum('qty');
-                            $customer_remain_amount = \common\models\OrderLine::find()->where(['order_id' => $xlist[$i], 'customer_id' => $model->customer_id])->sum('line_total');
+                          //  $customer_remain_amount = \common\models\OrderLine::find()->where(['order_id' => $xlist[$i], 'customer_id' => $model->customer_id])->sum('line_total');
+                            $customer_remain_amount = \common\models\Orders::find()->select(['order_total_amt'])->where(['id' => $xlist[$i]])->one();
                             if ($customer_remain_amount) {
                                 // $customer_remain_amount;
                                 $model_line = new \common\models\CustomerInvoiceLine();
                                 $model_line->customer_invoice_id = $model->id;
                                 $model_line->order_id = $xlist[$i];
-                                $model_line->amount = $customer_remain_amount;
-                                $model_line->remain_amount = $customer_remain_amount;
+                                $model_line->amount = $customer_remain_amount->order_total_amt;
+                                $model_line->remain_amount = $customer_remain_amount->order_total_amt;
                                 $model_line->status = 1;
                             //    $model_line->note = $list_note[$i]==null?'':$list_note[$i];
                                 if ($model_line->save(false)) {
-                                    \common\models\Orders::updateAll(['payment_status'=>1],['id'=>$xlist[$i]]);
+                                    //\common\models\Orders::updateAll(['payment_status'=>1],['id'=>$xlist[$i]]);
+                                    $model_update_order = \common\models\Orders::find()->where(['id'=>$xlist[$i]])->one();
+                                    if($model_update_order){
+                                        $model_update_order->payment_status = 1;
+                                        $model_update_order->save(false);
+                                    }
+
+//                                    $model_wait_pey = new \common\models\OrderWaitPayment();
+//                                    $model_wait_pey->order_id = $xlist[$i];
+//                                    $model_wait_pey->created_at = time();
+//                                    $model_wait_pey->created_by = \Yii::$app->user->id;
+//                                    $model_wait_pey->save(false);
                                 }
                             }
                         } else {
@@ -485,5 +497,41 @@ class CustomerinvoiceController extends Controller
 
     public function actionBillcycle(){
       return $this->render('_billlist');
+    }
+
+    public function actionCloseorderpayment(){
+        $res = 0;
+        $data = [];
+        $model = \common\models\OrderWaitPayment::find()->select(['order_id'])->limit(5)->all();
+        if($model){
+            foreach($model as $value){
+                $model_update_order = \common\models\Orders::find()->where(['id'=>$value->order_id,'payment_status'=>0])->one();
+                if($model_update_order){
+                    $model_update_order->payment_status = 1;
+                    if($model_update_order->save(false)){
+                        $res+=1;
+                        array_push($data,['id'=>$value->order_id]);
+                    }
+                }
+
+            }
+        }
+        if($res > 0){
+            echo "success ".$res.' records';
+        }else{
+            echo "not success";
+        }
+    }
+    public function actionDeleteorderpayment(){
+        $res = 0;
+        if(\common\models\OrderWaitPayment::deleteAll()){
+            $res = 1;
+        }
+
+        if($res > 0){
+            echo "success";
+        }else{
+            echo "not success";
+        }
     }
 }

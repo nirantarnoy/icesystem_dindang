@@ -141,6 +141,7 @@ $model_product_daily = \common\models\Product::find()->select(['id'])->where(['s
                     <?php
                     $total_order_cash_qty = 0;
                     $total_order_credit_qty = 0;
+                    $total_order_car_issue_qty = 0;
                     $total_order_cash_amount = 0;
                     $total_order_credit_amount = 0;
                     $total_production_qty = 0;
@@ -167,9 +168,11 @@ $model_product_daily = \common\models\Product::find()->select(['id'])->where(['s
                         $production_rec_qty = getProdDaily($value->id, $user_login_datetime, $t_date, $company_id, $branch_id, $user_id);
                         $order_cash_qty =  getOrderCashQty($value->id, $user_id, $user_login_datetime, $t_date);
                         $order_credit_qty = getOrderCreditQty($value->id, $user_id, $user_login_datetime, $t_date);
+                        $order_car_issue_qty = getOrderCarIssueQty($value->id, $user_id, $user_login_datetime, $t_date);
 //
                         $total_order_cash_qty = $total_order_cash_qty + $order_cash_qty;
                         $total_order_credit_qty = $total_order_credit_qty + $order_credit_qty;
+                       // $total_order_car_issue_qty = $total_order_car_issue_qty + $order_car_issue_qty;
                         $total_production_qty = $total_production_qty + $production_rec_qty;
 
                         $order_cash_amount = getOrderCashAmount($value->id, $user_id, $user_login_datetime, $t_date);
@@ -272,6 +275,7 @@ $model_product_daily = \common\models\Product::find()->select(['id'])->where(['s
                                        name="line_credit_qty[]"
                                        value="<?= $order_credit_qty ?>">
                                 <?= $order_credit_qty==0?'-':number_format($order_credit_qty, 2) ?>
+                                <input type="hidden" name="line_car_issue_qty[]" value="<?= $order_car_issue_qty ?>">
                             </td>
                             <td style="text-align: right;background-color: #99c5de;vertical-align: middle">
                                 <?= ($order_cash_qty + $order_credit_qty)==0?'-':number_format($order_cash_qty + $order_credit_qty, 2) ?>
@@ -791,6 +795,17 @@ function getOrderCreditQty($product_id, $user_id, $user_login_datetime, $t_date)
 //            }
 //        }
         $model = \common\models\SalePosCloseCreditQty::find()->select('qty')->where(['user_id' => $user_id, 'product_id' => $product_id])->one();
+        if($model){
+            $qty = $model->qty;
+        }
+    }
+    return $qty;
+}
+function getOrderCarIssueQty($product_id, $user_id, $user_login_datetime, $t_date)
+{
+    $qty = 0;
+    if ($user_id != null) {
+        $model = \common\models\SalePosCloseIssueCarQty::find()->select('qty')->where(['user_id' => $user_id, 'product_id' => $product_id])->one();
         if($model){
             $qty = $model->qty;
         }

@@ -922,11 +922,12 @@ $model_line = \common\models\TransactionPosSaleSum::find()->select(['user_id','s
                     <td style="padding: 8px;border: 1px solid grey;">หน้าบ้าน เงินเชื่อ</td>
                     <?php for ($y = 0; $y <= count($product_header) - 1; $y++): ?>
                         <?php
+                        $issue_car_x = getIssueCarQtySum(date('Y-m-d', strtotime($from_date)), $product_header[$y]);
                         $qty = getCreditQtySum(date('Y-m-d', strtotime($from_date)), $product_header[$y]);
-                        $sale_total_qty[$y] = ($sale_total_qty[$y] + $qty);
-                        $balance_out_total_qty[$y] = ($balance_out_total_qty[$y] - $qty);
+                        $sale_total_qty[$y] = ($sale_total_qty[$y] + ($qty - $issue_car_x));
+                        $balance_out_total_qty[$y] = ($balance_out_total_qty[$y] - ($qty - $issue_car_x));
                         ?>
-                        <td style="text-align: center;padding: 8px;border: 1px solid grey;"><?= $qty==0?'-':number_format($qty, 0) ?></td>
+                        <td style="text-align: center;padding: 8px;border: 1px solid grey;"><?= $qty==0?'-':number_format(($qty - $issue_car_x), 0) ?></td>
                     <?php endfor; ?>
                 </tr>
                 <tr>
@@ -937,7 +938,7 @@ $model_line = \common\models\TransactionPosSaleSum::find()->select(['user_id','s
                         $issue_car_total_qty[$y] = ($issue_car_total_qty[$y] + $qty);
                         $balance_out_total_qty[$y] = ($balance_out_total_qty[$y] - $qty);
                         ?>
-                        <td style="text-align: center;padding: 8px;border: 1px solid grey;"><?= $issue_car_total_qty[$y]==0?'-':number_format($issue_car_total_qty[$y], 0) ?></td>
+                        <td style="text-align: center;padding: 8px;border: 1px solid grey;"><?= $issue_car_total_qty[$y]==0?'-':number_format($qty, 0) ?></td>
                     <?php endfor; ?>
                 </tr>
                 <tr>
@@ -1113,7 +1114,7 @@ function getCreditQty($trans_date, $product_id, $shift)
             $qty = $model;
         }
     }
-    return $qty;
+
 }
 
 function getIssueCarQty($trans_date, $product_id, $shift)
@@ -1125,6 +1126,8 @@ function getIssueCarQty($trans_date, $product_id, $shift)
             $qty = $model;
         }
     }
+
+
     return $qty;
 }
 
@@ -1303,6 +1306,69 @@ function getDailycountSum($product_id,$trans_date)
         }
     }
     return $qty;
+}
+
+
+function getOrder($product_id, $f_date, $t_date, $find_sale_type, $find_user_id, $company_id, $branch_id, $is_invoice_req,$btn_order_type)
+{
+    $data = [];
+    $sql = "SELECT t2.order_no, t3.code , t3.name, t1.qty, t1.price, t2.order_date, t2.order_channel_id 
+              FROM order_line as t1 INNER JOIN orders as t2 ON t1.order_id = t2.id LEFT  JOIN customer as t3 ON t2.customer_id=t3.id 
+             WHERE  t2.order_date >=" . "'" . date('Y-m-d H:i:s', strtotime($f_date)) . "'" . " 
+             AND t2.order_date <=" . "'" . date('Y-m-d H:i:s', strtotime($t_date)) . "'" . " 
+             AND t1.product_id=" . $product_id . " 
+             AND t2.status=1
+             AND t2.sale_channel_id = 2
+             AND t2.company_id=" . $company_id . " AND t2.branch_id=" . $branch_id;
+
+    if ($find_sale_type != null && $find_sale_type != 0) {
+        if ($find_sale_type == 1) {
+            $sql .= " AND t2.payment_method_id=" . $find_sale_type;
+        }
+        if ($find_sale_type == 2) {
+            $sql .= " AND t2.order_channel_id is null AND t2.payment_method_id=" . $find_sale_type;
+        }
+        if ($find_sale_type == 3) {
+            $sql .= " AND t2.order_channel_id > 0";
+        }
+    }
+    if ($find_user_id != null) {
+        $sql .= " AND t2.created_by=" . $find_user_id;
+    }
+    if ($is_invoice_req != null) {
+        $sql .= " AND t3.is_invoice_req =" . $is_invoice_req;
+    }
+    // $sql .=" ORDER BY t1.price ASC";
+    if($btn_order_type == 1){
+        $sql .= " ORDER BY t2.order_no ASC";
+    }else if($btn_order_type == 2){
+        $sql .= " ORDER BY t1.price ASC";
+    }else{
+        $sql .= " ORDER BY t2.order_no ASC";
+    }
+
+    $query = \Yii::$app->db->createCommand($sql);
+    $model = $query->queryAll();
+    if ($model) {
+        for ($i = 0; $i <= count($model) - 1; $i++) {
+            $customer_code = $model[$i]['code'];
+            $customer_name = $model[$i]['name'];
+            if ($model[$i]['code'] == null) {
+                $customer_code = \backend\models\Deliveryroute::findCode($model[$i]['order_channel_id']);
+                $customer_name = \backend\models\Deliveryroute::findName($model[$i]['order_channel_id']);
+            }
+
+            array_push($data, [
+                'order_no' => $model[$i]['order_no'],
+                'cus_code' => $customer_code,
+                'cus_name' => $customer_name,
+                'qty' => $model[$i]['qty'],
+                'sale_price' => $model[$i]['price'],
+                'order_date' => $model[$i]['order_date'],
+            ]);
+        }
+    }
+    return $data;
 }
 
 

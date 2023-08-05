@@ -203,6 +203,22 @@ if ($model_c_login != null) {
                         ?>
                     </td>
                     <td>
+                        <?php
+                        echo \kartik\select2\Select2::widget([
+                            'name' => 'is_invoice_req',
+                            'data' => \yii\helpers\ArrayHelper::map(\backend\helpers\CustomerInvoiceReqType::asArrayObject(), 'id', 'name'),
+                            'value' => $is_invoice_req,
+                            'options' => [
+                                'placeholder' => '--ใบกำกับ--'
+                            ],
+                            'pluginOptions' => [
+                                'allowClear' => true,
+                                'multiple' => false,
+                            ]
+                        ]);
+                        ?>
+                    </td>
+                    <td>
                         <input type="submit" class="btn btn-primary" value="ค้นหา">
                     </td>
                     <td style="width: 25%"></td>
@@ -263,7 +279,7 @@ if ($model_c_login != null) {
                     <td colspan="7"><b><?= $line_product_code ?></b> <span
                                 style="color: darkblue"> <?= $line_product_name ?></span></td>
                 </tr>
-                <?php $find_order = getOrder($value->product_id, $from_date, $to_date, 0, $find_user_id, $company_id, $branch_id); ?>
+                <?php $find_order = getOrder($value->product_id, $from_date, $to_date, 0, $find_user_id, $company_id, $branch_id, $is_invoice_req); ?>
                 <?php if ($find_order != null): ?>
                     <?php
                     $loop_count = count($find_order);
@@ -351,7 +367,7 @@ if ($model_c_login != null) {
     </html>
 
 <?php
-function getOrder($product_id, $f_date, $t_date, $find_sale_type, $find_user_id, $company_id, $branch_id)
+function getOrder($product_id, $f_date, $t_date, $find_sale_type, $find_user_id, $company_id, $branch_id, $is_invoice_req)
 {
     $list_route_id = null;
 
@@ -387,6 +403,10 @@ function getOrder($product_id, $f_date, $t_date, $find_sale_type, $find_user_id,
         }
         $sql .= " AND t2.order_channel_id IN (" . $list_route_id . ")";
     }
+    if ($is_invoice_req != null) {
+        $sql .= " AND t3.is_invoice_req =" . $is_invoice_req;
+    }
+    $sql .=" ORDER BY t1.price ASC";
     $query = \Yii::$app->db->createCommand($sql);
     $model = $query->queryAll();
     if ($model) {
