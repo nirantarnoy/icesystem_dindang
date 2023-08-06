@@ -21,10 +21,22 @@ if (!empty(\Yii::$app->session->getFlash('msg-slip-tax'))) {
         }
     }
 }
+if (!empty(\Yii::$app->session->getFlash('msg-slip-tax-full'))) {
+    $f_name = \Yii::$app->session->getFlash('msg-slip-tax-full');
+    if ($branch_id == 1) {
+        if (file_exists('../web/uploads/company1/sliptax/' . $f_name)) {
+            $filename = "../web/uploads/company1/sliptax/" . $f_name;
+        }
+    } else if ($branch_id == 2) {
+        if (file_exists('../web/uploads/company2/sliptax/' . $f_name)) {
+            $filename = "../web/uploads/company2/sliptax/" . $f_name;
+        }
+    }
+}
 ?>
-<?=\Yii::$app->getUrlManager()->baseUrl?>
+<?php //echo \Yii::$app->getUrlManager()->baseUrl?>
 <input type="hidden" class="slip-print" value="<?= $filename ?>">
-<iframe id="iFramePdf" src="<?=\Yii::$app->getUrlManager()->baseUrl?>/uploads/company1/sliptax/slip_tax.pdf" style="display:none;"></iframe>
+<iframe id="iFramePdf" src="<?=$filename?>" style="display:none;"></iframe>
 <div class="customertaxinvoice-form">
     <?php $form = ActiveForm::begin(); ?>
     <input type="hidden" class="orderline-id-list" name="order_line_id_list" value="">
@@ -191,7 +203,7 @@ if (!empty(\Yii::$app->session->getFlash('msg-slip-tax'))) {
     <?php ActiveForm::end(); ?>
     <br>
     <div class="row">
-        <div class="col-lg-10"></div>
+        <div class="col-lg-10"><?php //print_r($order_line_list)?></div>
         <div class="col-lg-1">
             <?php if (!$model->isNewRecord): ?>
                 <form action="<?= \yii\helpers\Url::to(['customertaxinvoice/printfull'], true) ?>"

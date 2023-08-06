@@ -1,6 +1,34 @@
 <?php
 $model = \backend\models\Customertaxinvoice::find()->where(['id' => $print_id])->one();
 $modelline = \common\models\CustomerTaxInvoiceLine::find()->where(['tax_invoice_id' => $print_id])->all();
+
+
+$defaultFontConfig = (new Mpdf\Config\FontVariables())->getDefaults();
+$fontData = $defaultFontConfig['fontdata'];
+$mpdf = new \Mpdf\Mpdf(['tempDir' => __DIR__ . '/tmp',
+//$mpdf = new \Mpdf\Mpdf([
+    //'tempDir' => '/tmp',
+    //'mode' => 'utf-8', 'format' => [210, 149],
+    'mode' => 'utf-8', 'format' => 'A5','orientation'=>'L',
+    'fontdata' => $fontData + [
+            'sarabun' => [ // ส่วนที่ต้องเป็น lower case ครับ
+                'R' => 'THSarabunNew.ttf',
+                'I' => 'THSarabunNewItalic.ttf',
+                'B' => 'THSarabunNewBold.ttf',
+                'BI' => "THSarabunNewBoldItalic.ttf",
+            ]
+        ],
+]);
+
+//$mpdf->SetMargins(-10, 1, 1);
+$mpdf->SetDisplayMode('fullpage');
+$mpdf->AddPageByArray([
+    'margin-left' => 3,
+    'margin-right' => 3,
+    'margin-top' => 0,
+    'margin-bottom' => 1,
+]);
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -84,6 +112,7 @@ $modelline = \common\models\CustomerTaxInvoiceLine::find()->where(['tax_invoice_
             padding: 2px;
         }
         table.table-invoice-no {
+            border-collapse: collapse;
             font-size: 12px;
         }
         table.table-list-detail{
@@ -128,18 +157,18 @@ $modelline = \common\models\CustomerTaxInvoiceLine::find()->where(['tax_invoice_
             <tr>
                 <td style="width: 65%">
                     <table style="width: 100%;border-collapse: collapse;">
-                        <tr><td style="width: 20%;border:none;">รหัสลูกค้า</td><td style="border: none;"><?=\backend\models\Customer::findCode($model->customer_id)?></td></tr>
-                        <tr><td style="border: none;">นามลูกค้า</td><td style="border: none;"><?=\backend\models\Customer::findName($model->customer_id)?></td></tr>
-                        <tr><td style="border: none;">ที่อยู่</td><td style="border: none;"></td></tr>
-                        <tr><td style="color: white;border: none;">xx</td><td style="border: none;"></td></tr>
+                        <tr><td style="width: 20%;border:none;padding: 0px;">รหัสลูกค้า</td><td style="border: none;padding: 0px"><?=\backend\models\Customer::findCode($model->customer_id)?></td></tr>
+                        <tr><td style="border: none;padding: 0px">นามลูกค้า</td><td style="border: none;padding: 0px"><?=\backend\models\Customer::findName($model->customer_id)?></td></tr>
+                        <tr><td style="border: none;padding: 0px">ที่อยู่</td><td style="border: none;padding: 0px"><?=\backend\models\Customer::getAddress($model->customer_id)?></td></tr>
+                        <tr><td style="color: white;border: none;padding: 0px">xx</td><td style="border: none;padding: 0px"></td></tr>
                     </table>
                 </td>
                 <td style="width: 35%">
                     <table style="width: 100%;border-collapse: collapse;border:none;">
-                        <tr><td style="width: 50%;border: none;">วันที่</td><td style="border: none;"><?=date('d/m/Y')?></td></tr>
-                        <tr><td style="border: none;">เลขที่ใบกำกับ</td><td style="border: none;"><?=$model->invoice_no?></td></tr>
-                        <tr><td style="border: none;">กำหนดชำระเงิน</td><td style="border: none;"></td></tr>
-                        <tr><td style="border: none;">ครบกำหนด</td><td style="border: none;"></td></tr>
+                        <tr><td style="width: 50%;border: none;padding: 0px">วันที่</td><td style="border: none;padding: 0px"><?=date('d/m/Y')?></td></tr>
+                        <tr><td style="border: none;padding: 0px">เลขที่ใบกำกับ</td><td style="border: none;padding: 0px"><?=$model->invoice_no?></td></tr>
+                        <tr><td style="border: none;padding: 0px">กำหนดชำระเงิน</td><td style="border: none;padding: 0px"></td></tr>
+                        <tr><td style="border: none;padding: 0px">ครบกำหนด</td><td style="border: none;padding: 0px"></td></tr>
                     </table>
                 </td>
             </tr>
@@ -149,14 +178,14 @@ $modelline = \common\models\CustomerTaxInvoiceLine::find()->where(['tax_invoice_
 <div style="height: 2px;"></div>
 <div class="row">
     <div class="col-lg-12">
-        <table class="table-list-detail">
+        <table class="table-list-detail" style="widht: 100%">
             <thead>
             <tr>
                 <th style="text-align: center;padding: 10px;">รหัสสินค้า/รายละเอียด</th>
-                <th style="text-align: center;">จำนวน</th>
-                <th style="text-align: center;">หน่วยละ</th>
-                <th style="text-align: center;">ส่วนลด</th>
-                <th colspan="2" style="text-align: right;">จำนวนเงิน</th>
+                <th style="text-align: center;width: 10%">จำนวน</th>
+                <th style="text-align: center;width: 10%">หน่วยละ</th>
+                <th style="text-align: center;width: 10%">ส่วนลด</th>
+                <th style="text-align: right;width: 15%">จำนวนเงิน</th>
             </tr>
             </thead>
             <tbody>
@@ -179,12 +208,12 @@ $modelline = \common\models\CustomerTaxInvoiceLine::find()->where(['tax_invoice_
                 <td style="text-align: right"><?= number_format($total, 2) ?></td>
             </tr>
             <tr>
-                <td colspan="2" style="border-left: 0px;border-bottom: 0px;border-right: 0px;border-top: 0px;text-align: center;"></td>
+                <td colspan="2" rowspan="2" style="border-left: 0px;border-bottom: 0px;border-right: 0px;border-top: 0px;text-align: left;padding-bottom: -5px;">1. ได้รับสินค้าตามรายการข้างบนนี้ไว้ถูกต้องเรียบร้อยแล้ว<br />2. สินค้าตามใบส่งสินค้านี้ หากมีการเสียหายหรือขาดตกบกพร่องประการใด โปรดแจ้งให้ทราบภายใน 3 วัน <br /> นับจากวันที่ได้รับสินค้า มิฉะนั้นจะไม่รับการเรียกค่าชดเชยใดๆทั้งสิ้น</td>
                 <td colspan="2" style="text-align: left;border-right: 0px;border-top: 0px;"><b>ภาษีมูลค่าเพิ่ม</b></td>
                 <td style="text-align: right"><?= number_format($model->vat_amount, 2) ?></td>
             </tr>
             <tr>
-                <td colspan="2" style="border-left: 0px;border-bottom: 0px;border-right: 0px;border-top: 0px;text-align: center;"></td>
+<!--                <td colspan="2"style="border-left: 0px;border-bottom: 0px;border-right: 0px;border-top: 0px;text-align: left;top: -5px;"><p></p></td>-->
                 <td colspan="2" style="text-align: left;border-right: 0px;border-top: 0px;"><b>ยอดเงินสุทธิ</b></td>
                 <td style="text-align: right"><?= number_format($model->net_amount, 2) ?></td>
             </tr>
@@ -194,45 +223,91 @@ $modelline = \common\models\CustomerTaxInvoiceLine::find()->where(['tax_invoice_
 </div>
 <br/>
 <div class="row">
-    <div class="col-lg-4">
-        <table style="width: 100%;border: 1px solid grey;border-radius: 20px;" class="table-list-detail">
-            <tr>
-                <td style="text-align: center;border-bottom: 0px;">ได้รับสินค้าตามรายการถูกต้องแล้ว</td>
-            </tr>
-            <tr>
-                <td style="text-align: left;border-top:0px;border-bottom: 0px;">.........................................................................</td>
-            </tr>
-            <tr>
-                <td style="text-align: left;border-top:0px;">วันที่ ..............................................................</td>
-            </tr>
-        </table>
-    </div>
-    <div class="col-lg-4">
-        <table style="width: 100%;border-radius: 10px" class="table-list-detail">
-            <tr>
-                <td style="text-align: center;border-bottom: 0px;">ผู้ส่งของ</td>
-            </tr>
-            <tr>
-                <td style="text-align: left;border-top:0px;border-bottom: 0px;">.........................................................................</td>
-            </tr>
-            <tr>
-                <td style="text-align: left;border-top:0px;">วันที่ ..............................................................</td>
-            </tr>
-        </table>
-    </div>
-    <div class="col-lg-4">
-        <table style="width: 100%;border-radius: 10px" class="table-list-detail">
-            <tr>
-                <td style="text-align: center;border-bottom: 0px;">ผู้อนุมัติ</td>
-            </tr>
-            <tr>
-                <td style="text-align: left;border-top:0px;border-bottom: 0px;">.........................................................................</td>
-            </tr>
-            <tr>
-                <td style="text-align: left;border-top:0px;">วันที่ ..............................................................</td>
-            </tr>
-        </table>
-    </div>
+    <table style="width: 100%">
+        <tr>
+            <td style="width: 33.33%;border: none;">
+                <table style="width: 100%;border: 1px solid grey;border-radius: 20px;" class="table-list-detail">
+                    <tr>
+                        <td style="text-align: center;border-bottom: 0px;">ได้รับสินค้าตามรายการถูกต้องแล้ว</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;border-top:0px;border-bottom: 0px;">.................................................................................................................</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;border-top:0px;">วันที่ .......................................................................................................</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 33.33%;border: none;">
+                <table style="width: 100%;border-radius: 10px" class="table-list-detail">
+                    <tr>
+                        <td style="text-align: center;border-bottom: 0px;">ผู้ส่งของ</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;border-top:0px;border-bottom: 0px;">.................................................................................................................</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;border-top:0px;">วันที่ .......................................................................................................</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 33.33%;border: none;">
+                <table style="width: 100%;border-radius: 10px" class="table-list-detail">
+                    <tr>
+                        <td style="text-align: center;border-bottom: 0px;">ผู้อนุมัติ</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;border-top:0px;border-bottom: 0px;">.................................................................................................................</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left;border-top:0px;">วันที่ .......................................................................................................</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </div>
+<!--<div class="row">-->
+<!--    <div class="col-lg-4">-->
+<!--       -->
+<!--    </div>-->
+<!--    <div class="col-lg-4">-->
+<!--        -->
+<!--    </div>-->
+<!--    <div class="col-lg-4">-->
+<!--        -->
+<!--    </div>-->
+<!--</div>-->
 </body>
 </html>
+
+<?php
+$slip_path = '';
+if($branch_id == 1){
+    $slip_path = '../web/uploads/company1/sliptax/slip_tax_full.pdf';
+}else if($branch_id == 2){
+    $slip_path = '../web/uploads/company2/sliptax/slip_tax_full.pdf';
+}
+//    if(file_exists('../web/uploads/slip/slip_index.pdf')){
+//        unlink('../web/uploads/slip/slip_index.pdf');
+//    }
+if(file_exists($slip_path)){
+    unlink($slip_path);
+}
+
+$html = ob_get_contents(); // ทำการเก็บค่า HTML จากคำสั่ง ob_start()
+$mpdf->WriteHTML($html); // ทำการสร้าง PDF ไฟล์
+//$mpdf->Output( 'Packing02.pdf','F'); // ให้ทำการบันทึกโค้ด HTML เป็น PDF โดยบันทึกเป็นไฟล์ชื่อ MyPDF.pdf
+ob_clean();
+//$mpdf->SetJS('this.print();');
+$mpdf->SetJS('this.print();');
+
+//$mpdf->Output('../web/uploads/slip/slip_index.pdf', 'F');
+$mpdf->Output($slip_path, 'F');
+
+ob_end_flush();
+
+//header("location: system_stock/report_pdf/Packing.pdf");
+
+?>
+<!--ดาวโหลดรายงานในรูปแบบ PDF <a class="btn-export-pdf" href="MyPDF.pdf">คลิกที่นี้</a>-->

@@ -44,13 +44,13 @@ class CustomertaxinvoiceController extends Controller
         $dataProvider->setSort(['defaultOrder' => ['id' => SORT_DESC]]);
         $dataProvider->pagination->pageSize = $pageSize;
 
-//        return $this->render('index', [
-//            'searchModel' => $searchModel,
-//            'dataProvider' => $dataProvider,
-//            'perpage' => $pageSize,
-//        ]);
+        return $this->render('index', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+            'perpage' => $pageSize,
+        ]);
 
-        return $this->render('_printshortpreview');
+      //  return $this->render('_printshortpreview');
     }
 
     /**
@@ -103,7 +103,13 @@ class CustomertaxinvoiceController extends Controller
                             $model_x = new \common\models\CustomerTaxInvoiceDetail();
                             $model_x->customer_tax_invoice_id = $model->id;
                             $model_x->order_line_id = $arr[$x];
-                            $model_x->save(false);
+                            if($model_x->save(false)){
+                                $model_update_line = \common\models\OrderLine::find()->where(['id'=>$arr[$x]])->one();
+                                if($model_update_line != null){
+                                    $model_update_line->tax_status = 1;
+                                    $model_update_line->save(false);
+                                }
+                            }
                         }
                     }
                 }
@@ -128,6 +134,14 @@ class CustomertaxinvoiceController extends Controller
     {
         $model = $this->findModel($id);
         $model_line = \common\models\CustomerTaxInvoiceLine::find()->where(['tax_invoice_id'=>$id])->all();
+        $model_order_line = \common\models\CustomerTaxInvoiceDetail::find()->select('order_line_id')->where(['customer_tax_invoice_id'=>$id])->all();
+        $order_list = [];
+        if($model_order_line){
+            foreach ($model_order_line as $value){
+                array_push($order_list,$value->order_line_id);
+            }
+        }
+
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
@@ -136,6 +150,7 @@ class CustomertaxinvoiceController extends Controller
         return $this->render('update', [
             'model' => $model,
             'model_line' => $model_line,
+            'order_line_list' => $order_list,
         ]);
     }
 
@@ -373,13 +388,18 @@ class CustomertaxinvoiceController extends Controller
 
         $session = \Yii::$app->session;
         $session->setFlash('msg-slip-tax', 'slip_tax.pdf');
-      //  return $this->redirect(['customertaxinvoice/update','id'=>$id]);
-        return $this->render('_printshortpreview');
+        return $this->redirect(['customertaxinvoice/update','id'=>$id]);
+       // return $this->render('_printshortpreview');
     }
     public function actionPrintfull(){
         $id = \Yii::$app->request->post('print_id');
-        return $this->render('_printfull',[
+        $this->renderPartial('_printfull',[
             'print_id'=>$id,
+            'branch_id'=>1
         ]);
+
+        $session = \Yii::$app->session;
+        $session->setFlash('msg-slip-tax-full', 'slip_tax_full.pdf');
+        return $this->redirect(['customertaxinvoice/update','id'=>$id]);
     }
 }
