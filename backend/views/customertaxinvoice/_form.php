@@ -74,10 +74,12 @@ if (!empty(\Yii::$app->session->getFlash('msg-slip-tax-full'))) {
             ]) ?>
         </div>
         <div class="col-lg-4">
+            <?php $model->payment_date == null ? date('Y-m-d') : date('Y-m-d', strtotime($model->payment_date)) ?>
             <?= $form->field($model, 'payment_date')->widget(\kartik\date\DatePicker::className(), [
-                'value' => date('Y-m-d'),
                 'pluginOptions' => [
-
+                    'format' => 'dd-mm-yyyy',
+                    'todayHighlight' => true,
+                    'todayBtn' => true
                 ]
             ]) ?>
         </div>
@@ -368,7 +370,7 @@ $(function(){
        var customer_id = $('.selected-customer-id').val();
        var from_date = $("#search-from-date").val();
        var to_date = $("#search-to-date").val();
-  //  alert(customer_id);
+   // alert(customer_id);
   //  alert(from_date);
   //  alert(to_date);
     $.ajax({
@@ -403,7 +405,7 @@ function myPrint(){
 
 function showfindorder(){
     var customer_id = $('.selected-customer-id').val();
-  //  alert(customer_id);
+   alert(customer_id);
     $.ajax({
       type: 'post',
       dataType: 'html',

@@ -42,6 +42,7 @@ $mpdf->AddPageByArray([
 
 $model_customer_loan = null;
 if ($is_find_date == 1) {
+   // echo "ok";
     if ($find_customer_id != null) {
 //$customer_name = $trans_data[0]['customer_id']?getCustomername($connect, $trans_data[0]['customer_id']):$trans_data[0]['customer_name'];
 //$model_customer_loan = \common\models\QueryProductTransDaily::find()->where(['date(trans_date)' => date('Y-m-d')])->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])->all();
@@ -63,10 +64,12 @@ if ($is_find_date == 1) {
 
     } else {
         if ($is_find_date == 1) {
+           // echo "ok";
             $model_customer_loan = \common\models\QuerySalePosData::find()->select(['customer_id'])->where(['BETWEEN', 'order_date', date('Y-m-d H:i', strtotime($from_date)), date('Y-m-d H:i', strtotime($to_date))])
                 ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])
                 ->andFilterWhere(['>', 'line_total_credit', 0])
                 ->groupBy('customer_id')->orderBy(['customer_id' => SORT_ASC])->all();
+               // ->groupBy('customer_id')->orderBy(['customer_id' => SORT_ASC])->all();
         } else { // อ้อมน้อยช้า comment ไว้ก่อน
 //        $model_customer_loan = \common\models\QuerySalePosData::find()->select(['customer_id'])->where(['<=', 'order_date', date('Y-m-d H:i', strtotime($to_date))])
 //            ->andFilterWhere(['company_id' => $company_id, 'branch_id' => $branch_id])

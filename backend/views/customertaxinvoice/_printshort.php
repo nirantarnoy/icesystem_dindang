@@ -115,33 +115,34 @@ $mpdf->AddPageByArray([
     <!--    <script type="text/javascript" src="js/ThaiBath-master/thaibath.js"></script>-->
 </head>
 <body>
-<div class="row">
-    <div class="col-lg-12" style="text-align: right;">
-        <h6>เลขที่ <?=$model->invoice_no?> </h6>
-    </div>
-</div>
-<br>
-<div class="row">
-    <div class="col-lg-12" style="text-align: center;">
-        <h6><u>ใบเสร็จรับเงิน/ใบกำกับภาษีอย่างย่อ</u></h6>
-    </div>
-</div>
-<div class="row">
-    <div class="col-lg-12" style="text-align: center;">
-        <h5>บริษัท วรภัทร จำกัด (สาขาที่ 00001)</h5>
-    </div>
-</div>
-<div class="row">
-    <div class="col-lg-12" style="text-align: center;">
-       <p>167 หมู่ 6 ต.ห้วยจรเข้ อ.เมืองนครปฐม จ.นครปฐม 73000 <br>เลขประจำตัวผู้เสียภาษีอากร 0-7355-17000-11-1</p>
-    </div>
-</div>
-<div class="row">
-    <div class="col-lg-12" style="text-align: right;">
-        <p>วันที่ <?=date('d/m/Y', strtotime($model->invoice_date))?> </p>
-    </div>
-</div>
-<br>
+<table style="width: 100%;">
+    <tr>
+        <td style="text-align: right;width: 100%;border: none;">
+            <h4>เลขที่ <?=$model->invoice_no?> </h4>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center;width: 100%;border: none;">
+            <h4><u>ใบเสร็จรับเงิน/ใบกำกับภาษีอย่างย่อ</u></h4>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center;width: 100%;border: none;">
+            <h4>บริษัท วรภัทร จำกัด (สาขาที่ 00001)</h4>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: center;width: 100%;border: none;">
+            <p>167 หมู่ 6 ต.ห้วยจรเข้ อ.เมืองนครปฐม จ.นครปฐม 73000 <br>เลขประจำตัวผู้เสียภาษีอากร 0-7355-17000-11-1</p>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align: right;width: 100%;border: none;">
+            <h5>วันที่ <?=date('d/m/Y', strtotime($model->invoice_date))?> </h5>
+        </td>
+    </tr>
+</table>
+
 <div class="row">
     <div class="col-lg-12">
         <table>
@@ -176,10 +177,9 @@ $mpdf->AddPageByArray([
     </div>
 </div>
 <br />
-<br />
 <div class="row">
     <div class="col-lg-12" style="text-align: right;">
-        <h5>ผู้รับเงิน.......................... </h5>
+        <h4>ผู้รับเงิน.......................... </h4>
     </div>
 </div>
 </body>

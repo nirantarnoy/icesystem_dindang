@@ -76,6 +76,7 @@ class CustomertaxinvoiceController extends Controller
         $model = new Customertaxinvoice();
 
         if ($model->load(Yii::$app->request->post())) {
+
             $order_line_id_list = \Yii::$app->request->post('order_line_id_list');
             $line_product_group_id = \Yii::$app->request->post('line_product_group_id');
             $line_qty = \Yii::$app->request->post('line_qty');
@@ -83,6 +84,21 @@ class CustomertaxinvoiceController extends Controller
             $line_discount = \Yii::$app->request->post('line_discount');
             $line_total = \Yii::$app->request->post('line_total');
 
+            $inv_date = date('Y-m-d');
+            $pay_date = date('Y-m-d');
+
+            $x1 = explode('-',$model->invoice_date);
+            $x2 = explode('-',$model->payment_date);
+            if($x1!=null && count($x1)>1){
+                $inv_date = $x1[2].'-'.$x1[1].'-'.$x1[0];
+            }
+            if($x2!=null && count($x2)>1){
+                $pay_date = $x2[2].'-'.$x2[1].'-'.$x2[0];
+            }
+
+            $model->invoice_date = date('Y-m-d', strtotime($inv_date));
+            $model->payment_date = date('Y-m-d', strtotime($pay_date));
+           // $model->total_text = '';
             if($model->save(false)){
                 if($line_product_group_id != null){
                     for($i=0;$i<=count($line_product_group_id)-1;$i++){
@@ -96,23 +112,23 @@ class CustomertaxinvoiceController extends Controller
                         $modelline->save(false);
                     }
                 }
-                if($order_line_id_list != null){
-                    $arr = explode(',',$order_line_id_list);
-                    if($arr != null){
-                        for($x=0;$x<=count($arr)-1;$x++){
-                            $model_x = new \common\models\CustomerTaxInvoiceDetail();
-                            $model_x->customer_tax_invoice_id = $model->id;
-                            $model_x->order_line_id = $arr[$x];
-                            if($model_x->save(false)){
-                                $model_update_line = \common\models\OrderLine::find()->where(['id'=>$arr[$x]])->one();
-                                if($model_update_line != null){
-                                    $model_update_line->tax_status = 1;
-                                    $model_update_line->save(false);
-                                }
-                            }
-                        }
-                    }
-                }
+//                if($order_line_id_list != null){
+//                    $arr = explode(',',$order_line_id_list);
+//                    if($arr != null){
+//                        for($x=0;$x<=count($arr)-1;$x++){
+//                            $model_x = new \common\models\CustomerTaxInvoiceDetail();
+//                            $model_x->customer_tax_invoice_id = $model->id;
+//                            $model_x->order_line_id = $arr[$x];
+//                            if($model_x->save(false)){
+//                                $model_update_line = \common\models\OrderLine::find()->where(['id'=>$arr[$x]])->one();
+//                                if($model_update_line != null){
+//                                    $model_update_line->tax_status = 1;
+//                                    $model_update_line->save(false);
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
             }
             return $this->redirect(['view', 'id' => $model->id]);
         }
@@ -187,13 +203,13 @@ class CustomertaxinvoiceController extends Controller
     public function actionFindorder()
     {
         $customer_id = 210;// \Yii::$app->request->post('customer_id');
-      //  $customer_id =  \Yii::$app->request->post('customer_id');
+       // $customer_id =  \Yii::$app->request->post('customer_id');
         $html = '';
         if ($customer_id > 0) {
-            $model = \backend\models\Orders::find()->select(['id', 'order_date'])->where(['customer_id' => $customer_id])->limit(20)->all();
+            $model = \backend\models\Orders::find()->select(['id', 'order_date'])->where(['customer_id' => $customer_id])->limit(50)->all();
             if ($model) {
                 foreach ($model as $x_value) {
-//                    $html .= $x_value->id;
+                    //$html .= $x_value->id."<br />";
                     $modelline = \backend\models\Orderline::find()->where(['order_id' => $x_value->id])->andFilterWhere(['is','tax_status',new \yii\db\Expression('null')])->all();
                     if ($modelline) {
                         foreach ($modelline as $value) {
@@ -220,7 +236,6 @@ class CustomertaxinvoiceController extends Controller
                         }
                     }
                 }
-
 
             }
         }
