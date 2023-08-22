@@ -2,30 +2,32 @@
 
 namespace backend\controllers;
 
-use backend\models\UsergroupSearch;
+use backend\models\EmployeeSearch;
+use backend\models\PaymenttermSearch;
 use Yii;
-use backend\models\User;
-use backend\models\UserSearch;
+use backend\models\Position;
+use backend\models\PositionSearch;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use yii\web\Session;
 
 /**
- * UserController implements the CRUD actions for User model.
+ * PositionController implements the CRUD actions for Position model.
  */
-class UserController extends Controller
+class PositionController extends Controller
 {
-    public $enableCsrfValidation = false;
+    /**
+     * {@inheritdoc}
+     */
     public function behaviors()
     {
         return [
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
-                    'delete' => ['POST','GET'],
+                    'delete' => ['POST'],
                 ],
             ],
             'access'=>[
@@ -50,7 +52,7 @@ class UserController extends Controller
     }
 
     /**
-     * Lists all User models.
+     * Lists all Position models.
      * @return mixed
      */
     public function actionIndex()
@@ -62,7 +64,7 @@ class UserController extends Controller
         }
 
         $pageSize = \Yii::$app->request->post("perpage");
-        $searchModel = new UserSearch();
+        $searchModel = new PositionSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         if($viewstatus ==1){
             $dataProvider->query->andFilterWhere(['status'=>$viewstatus]);
@@ -83,7 +85,7 @@ class UserController extends Controller
     }
 
     /**
-     * Displays a single User model.
+     * Displays a single Position model.
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
@@ -96,25 +98,32 @@ class UserController extends Controller
     }
 
     /**
-     * Creates a new User model.
+     * Creates a new Position model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
     public function actionCreate()
     {
-        $model = new User();
-
-        if ($model->load(Yii::$app->request->post())) {
-            $model->setPassword($model->pwd);
-            $model->generateAuthKey();
-            $model->email = $model->username . '@vorapat.com';
-            //$model->status = $model->status == 1?10:9;
-            if ($model->save()) {
-                //$model->assignment();
-                $session = Yii::$app->session;
-                $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
-                return $this->redirect(['index']);
+        $model = new Position();
+        $company_id = 1;
+        $branch_id = 1;
+        $default_warehouse = 6;
+        if (!empty(\Yii::$app->user->identity->company_id)) {
+            $company_id = \Yii::$app->user->identity->company_id;
+        }
+        if (!empty(\Yii::$app->user->identity->branch_id)) {
+            $branch_id = \Yii::$app->user->identity->branch_id;
+            if ($branch_id == 2) {
+                $default_warehouse = 5;
             }
+        }
+        if ($model->load(Yii::$app->request->post())) {
+            $model->company_id = $company_id;
+            $model->branch_id = $branch_id;
+            if($model->save()){
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
+
         }
 
         return $this->render('create', [
@@ -122,20 +131,19 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Updates an existing Position model.
+     * If update is successful, the browser will be redirected to the 'view' page.
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException if the model cannot be found
+     */
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
-        $model->getRoleByUser();
 
-      //  print_r($model);return;
-        if ($model->load(Yii::$app->request->post())) {
-            //$model->status = $model->status == 1?10:9;
-            if ($model->save()) {
-                $model->assignment();
-                $session = \Yii::$app->session;
-                $session->setFlash('msg', 'บันทึกรายการเรียบร้อย');
-                return $this->redirect(['index']);
-            }
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id]);
         }
 
         return $this->render('update', [
@@ -144,7 +152,7 @@ class UserController extends Controller
     }
 
     /**
-     * Deletes an existing User model.
+     * Deletes an existing Position model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
@@ -158,28 +166,18 @@ class UserController extends Controller
     }
 
     /**
-     * Finds the User model based on its primary key value.
+     * Finds the Position model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
-     * @return User the loaded model
+     * @return Position the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = User::findOne($id)) !== null) {
+        if (($model = Position::findOne($id)) !== null) {
             return $model;
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
-    }
-    public function actionPrintlogindaily(){
-        $id = \Yii::$app->request->post('find_customer_id');
-        $from_date = \Yii::$app->request->post('from_date');
-        $to_date = \Yii::$app->request->post('to_date');
-        return $this->render('_logindaily',[
-            'find_from_date' => $from_date,
-            'find_to_date'=> $to_date,
-            'find_customer_id'=>$id,
-        ]);
     }
 }
