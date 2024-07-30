@@ -228,51 +228,63 @@ if ($find_from_date != null) {
     $product_header_2 = [];
     $model_line = null;
 
-    if ($find_customer_id != null || $find_customer_id != '') {
+   // if ($find_customer_id != null || $find_customer_id != '') {
 
-//        $modelx = \common\models\QueryOrderCustomerProduct::find()->select(['product_id'])->where(['customer_id' => $find_customer_id])
-//            ->andFilterWhere(['BETWEEN', 'order_date', $from_date, $to_date])
-//            ->groupBy('product_id')->orderBy(['name' => SORT_ASC])->all();
-
-        $sql = "SELECT query_order_customer_product.product_id FROM query_order_customer_product INNER JOIN product ON query_order_customer_product.product_id = product.id";
-        $sql .= " WHERE query_order_customer_product.company_id=" . $company_id . " AND query_order_customer_product.branch_id=" . $branch_id;
-        $sql .= " AND (date(order_date) BETWEEN '" . date('Y-m-d', strtotime($from_date)) . "' AND '" . date('Y-m-d', strtotime($to_date)) . "')";
-        $sql .= " GROUP BY product_id";
-        $sql .= " ORDER BY item_pos_seq ASC";
-
-        $modelx = \Yii::$app->db->createCommand($sql)->queryAll();
-
-        if ($modelx) {
-            for ($m = 0; $m <= count($modelx) - 1; $m++) {
-                if (!in_array($modelx[$m]['product_id'], $product_header)) {
-                    array_push($product_header, $modelx[$m]['product_id']);
-                }
-            }
-        }
-
+////        $modelx = \common\models\QueryOrderCustomerProduct::find()->select(['product_id'])->where(['customer_id' => $find_customer_id])
+////            ->andFilterWhere(['BETWEEN', 'order_date', $from_date, $to_date])
+////            ->groupBy('product_id')->orderBy(['name' => SORT_ASC])->all();
+//
+//        $sql = "SELECT query_order_customer_product.product_id FROM query_order_customer_product INNER JOIN product ON query_order_customer_product.product_id = product.id";
+//        $sql .= " WHERE query_order_customer_product.company_id=" . $company_id . " AND query_order_customer_product.branch_id=" . $branch_id;
+//        $sql .= " AND (date(order_date) BETWEEN '" . date('Y-m-d', strtotime($from_date)) . "' AND '" . date('Y-m-d', strtotime($to_date)) . "')";
+//        $sql .= " GROUP BY product_id";
+//        $sql .= " ORDER BY item_pos_seq ASC";
+//
+//        $modelx = \Yii::$app->db->createCommand($sql)->queryAll();
+//
 //        if ($modelx) {
-//            foreach ($modelx as $valuexx) {
-//                if (!in_array($valuexx->product_id, $product_header)) {
-//                    array_push($product_header, $valuexx->product_id);
+//            for ($m = 0; $m <= count($modelx) - 1; $m++) {
+//                if (!in_array($modelx[$m]['product_id'], $product_header)) {
+//                    array_push($product_header, $modelx[$m]['product_id']);
 //                }
 //            }
 //        }
+//
+////        if ($modelx) {
+////            foreach ($modelx as $valuexx) {
+////                if (!in_array($valuexx->product_id, $product_header)) {
+////                    array_push($product_header, $valuexx->product_id);
+////                }
+////            }
+////        }
+///
+        $model_product = \backend\models\Product::find()->where(['status'=>1,'company_id'=>$company_id,'branch_id'=>$branch_id])->orderBy(['item_pos_seq'=>SORT_ASC])->all();
         $model_line = \common\models\QueryOrderCustomerProduct::find()->select(['id', 'order_no'])->where(['customer_id' => $find_customer_id])
             ->andFilterWhere(['BETWEEN', 'order_date', $from_date, $to_date])
-            ->andFilterWhere(['status' => 1])
-            ->groupBy(['id'])->all();
-    }
+            ->andFilterWhere(['status' => [1,100]])
+           // ->andFilterWhere(['status' => 1])
+                ->groupBy(['id'])->all();
+    //}
 
 
     // print_r($product_header);
 
-    if (count($product_header) > 0) {
-        for ($a = 0; $a <= count($product_header) - 1; $a++) {
-            if (checkhassale($product_header[$a], $from_date, $to_date, $find_customer_id, $company_id, $branch_id) > 0) {
-                array_push($product_header_2, [$product_header[$a]]);
-            }
+//    if (count($product_header) > 0) {
+//        for ($a = 0; $a <= count($product_header) - 1; $a++) {
+//            if (checkhassale($product_header[$a], $from_date, $to_date, $find_customer_id, $company_id, $branch_id) > 0) {
+//                array_push($product_header_2, [$product_header[$a]]);
+//            }
+//        }
+//    }
+
+    if($model_product!=null){
+        foreach ($model_product as $value){
+            array_push($product_header_2,[$value->id]);
         }
     }
+
+
+
     ?>
     <table style="width: 100%" id="table-data">
         <tr>
@@ -293,10 +305,31 @@ if ($find_from_date != null) {
                 $num += 1;
                 $line_total_qty = 0;
                 $line_total_amt = 0;
+               // echo 'xxx';
+
+                $to_date_new2 = '';
+                $is_29_02 = 0;
+                $find_order_date = date('Y-m-d');
+                $find_or_date = \backend\models\Orders::getOrderdate($value->id);
+                $xdate2 = explode(' ', $find_or_date);
+                if (count($xdate2) > 1) {
+                    $xxtodate2 = explode('-', $xdate2[0]);
+                    if (count($xxtodate2) > 1) {
+                        if ($xxtodate2[1] == '02' && $xxtodate2[2] == '29') {
+                            $is_29_02 = 1;
+                            $to_date_new2 = '29-02-' . ($xxtodate2[0] + 543);
+                        } else {
+                            $is_29_02 = 0;
+                            $to_date_new2 = ($xxtodate2[0] + 543) . '/' . $xxtodate2[1] . '/' . $xxtodate2[2];
+                        }
+
+                    }
+                }
+
                 ?>
                 <tr>
                     <td style="text-align: center;padding: 10px;border: 1px solid grey"><?= $num ?></td>
-                    <td style="text-align: center;padding: 0px;border: 1px solid grey"><?= date('d-m-Y', strtotime('+543 years', strtotime(\backend\models\Orders::getOrderdate($value->id)))) ?></td>
+                    <td style="text-align: center;padding: 0px;border: 1px solid grey"><?= $is_29_02 == 1 ? $to_date_new2 : date('d-m-Y', strtotime($to_date_new2)) ?></td>
                     <td style="text-align: center;padding: 0px;border: 1px solid grey"><?= $value->order_no ?></td>
                     <?php for ($x = 0; $x <= count($product_header_2) - 1; $x++): ?>
                         <?php
@@ -360,6 +393,9 @@ if ($find_from_date != null) {
     <!--    <td>-->
     <!--        <button class="btn btn-info" onclick="printContent('div1')">พิมพ์ใบวางบิล</button>-->
     <!--    </td>-->
+    <td>
+        <a class="btn btn-info" href="<?= \yii\helpers\Url::to(['salereport/indexupdate'], true) ?>">อัพเดทใบส่งของ</a>
+    </td>
     <td style="text-align: right">
         <button id="btn-export-excel-top" class="btn btn-secondary">Export Excel</button>
         <!--            <button id="btn-print" class="btn btn-warning" onclick="printContent('div1')">Print</button>-->
